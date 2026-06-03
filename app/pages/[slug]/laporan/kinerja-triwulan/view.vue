@@ -219,11 +219,13 @@ async function fetchTargetAndCapaian(unitKerja: string, triwulan: string) {
       $fetch<any[]>('/api/capaian-kinerja', { query: { unitKerja, triwulan } }).catch(() => [])
     ])
     
+    const cleanUnitKerja = unitKerja.trim().toLowerCase()
     const combined: any[] = []
     
     const ssList = Array.isArray(ssRaw) ? ssRaw : ((ssRaw as any)?.data || [])
     ssList.forEach((ss: any) => {
-      if (ss.pengampu === unitKerja || ss.unit_kerja === unitKerja) {
+      const ssPengampu = (ss.pengampu || ss.unit_kerja || '').trim().toLowerCase()
+      if (ssPengampu === cleanUnitKerja) {
         let targetVal = 0
         if (ss.targets && Array.isArray(ss.targets)) {
            const t = ss.targets.find((x: any) => String(x.tahun) === String(year))
@@ -240,7 +242,8 @@ async function fetchTargetAndCapaian(unitKerja: string, triwulan: string) {
 
     const spList = Array.isArray(spRaw) ? spRaw : ((spRaw as any)?.data || [])
     spList.forEach((sp: any) => {
-       if (sp.unit_kerja === unitKerja || sp.unitKerjaNama === unitKerja || sp.pengampu === unitKerja) {
+       const spUnit = (sp.unit_kerja || sp.unitKerjaNama || sp.pengampu || '').trim().toLowerCase()
+       if (spUnit === cleanUnitKerja) {
          combined.push({
            id: `sp-${sp.id}`,
            sasaranKinerja: `[SP] ${sp.sasaran_program_text || sp.namaSp || '-'}`,
@@ -252,7 +255,8 @@ async function fetchTargetAndCapaian(unitKerja: string, triwulan: string) {
 
     const skList = Array.isArray(skRaw) ? skRaw : ((skRaw as any)?.data || [])
     skList.forEach((sk: any) => {
-       if (sk.unit_kerja === unitKerja || sk.unitKerjaNama === unitKerja || sk.pengampu === unitKerja) {
+       const skUnit = (sk.unit_kerja || sk.unitKerjaNama || sk.pengampu || '').trim().toLowerCase()
+       if (skUnit === cleanUnitKerja) {
          combined.push({
            id: `sk-${sk.id}`,
            sasaranKinerja: `[SK] ${sk.sasaran_kegiatan_text || sk.namaSk || '-'}`,
