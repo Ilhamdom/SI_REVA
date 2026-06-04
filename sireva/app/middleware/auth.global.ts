@@ -2,7 +2,8 @@ import { useAuthUser } from '~/composables/useAuthUser'
 
 export default defineNuxtRouteMiddleware((to, from) => {
   // 1. Skip middleware during SSR if needed, or if on login page
-  if (to.path === '/login' || to.path === '/') {
+  const publicRoutes = ['/login', '/', '/visi-misi', '/produk-hukum']
+  if (publicRoutes.includes(to.path)) {
     return
   }
 

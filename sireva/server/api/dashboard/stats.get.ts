@@ -2,21 +2,193 @@ import { db } from '../../db';
 import { sasaranStrategis } from '../../db/schema/sasaran-strategis';
 import { sasaranProgram } from '../../db/schema/sasaran-program';
 import { sasaranKegiatan } from '../../db/schema/sasaran-kegiatan';
-import { sql } from 'drizzle-orm';
+import { laporanSasaranProgram } from '../../db/schema/laporan-sasaran-program';
+import { laporanSasaranKegiatan } from '../../db/schema/laporan-sasaran-kegiatan';
+import { laporanSasaranStrategis } from '../../db/schema/laporan-sasaran-strategis';
+import { indikatorProgram } from '../../db/schema/indikator-program';
+import { indikatorKinerja } from '../../db/schema/indikator-kinerja';
+import { unitKerja } from '../../db/schema/unit-kerja';
+import { sql, isNull, and, eq, or } from 'drizzle-orm';
 import { defineEventHandler } from 'h3';
 
 export default defineEventHandler(async (event) => {
   try {
-    // Fetch counts using raw SQL for efficiency or Drizzle count helper
-    const ssCount = await db.select({ count: sql<number>`count(*)` }).from(sasaranStrategis);
-    const spCount = await db.select({ count: sql<number>`count(*)` }).from(sasaranProgram);
-    const skCount = await db.select({ count: sql<number>`count(*)` }).from(sasaranKegiatan);
+    // 1. Fetch counts
+    const ssCount = await db.select({ count: sql<number>`count(*)` })
+      .from(sasaranStrategis)
+      .where(isNull(sasaranStrategis.deletedAt));
+
+    const spCount = await db.select({ count: sql<number>`count(*)` })
+      .from(sasaranProgram)
+      .where(isNull(sasaranProgram.deletedAt));
+
+    const skCount = await db.select({ count: sql<number>`count(*)` })
+      .from(sasaranKegiatan)
+      .where(isNull(sasaranKegiatan.deletedAt));
+
+    const programIkuCount = await db.select({ count: sql<number>`count(*)` })
+      .from(indikatorProgram);
+
+    const kegiatanIkuCount = await db.select({ count: sql<number>`count(*)` })
+      .from(indikatorKinerja)
+      .where(and(eq(indikatorKinerja.isActive, true), isNull(indikatorKinerja.deletedAt)));
+
+    const totalIku = Number(programIkuCount[0]?.count || 0) + Number(kegiatanIkuCount[0]?.count || 0);
+
+    // 2. Fetch reports for 2026
+    const programReports = await db.execute(sql`
+      select 
+        lsp.realisasi,
+        coalesce((select target from sireva.target_indikator_program tip where tip.indikator_id = lsp.indikator_id and tip.tahun = 2026 limit 1), 0) as target,
+        sp.pengampu as unit_name
+      from sireva.laporan_sasaran_program lsp
+      join sireva.sasaran_program sp on sp.id = lsp.sasaran_id
+    `);
+
+    const kegiatanReports = await db.execute(sql`
+      select 
+        lsk.realisasi,
+        coalesce((select target_nilai from sireva.target_indikator_kegiatan tik where tik.id_iku = lsk.indikator_id and tik.tahun = 2026 limit 1), 0) as target,
+        sk.pengampu as unit_name
+      from sireva.laporan_sasaran_kegiatan lsk
+      join sireva.sasaran_kegiatan sk on sk.id = lsk.sasaran_id
+    `);
+
+    let totalCapaian = 0;
+    let reportCount = 0;
+    let belumTercapai = 0;
+
+    // Track achievements by unit_name
+    const unitMap = new Map<string, { total: number, count: number }>();
+
+    const processReport = (r: any) => {
+      const real = parseFloat(r.realisasi || '0');
+      const tar = parseFloat(r.target || '0');
+      const unitName = r.unit_name || 'Lainnya';
+
+      if (tar > 0) {
+        const cap = Math.min((real / tar) * 100, 100);
+        totalCapaian += cap;
+        reportCount++;
+        if (cap < 100) {
+          belumTercapai++;
+        }
+
+        const current = unitMap.get(unitName) || { total: 0, count: 0 };
+        unitMap.set(unitName, {
+          total: current.total + cap,
+          count: current.count + 1
+        });
+      }
+    };
+
+    programReports.rows.forEach(processReport);
+    kegiatanReports.rows.forEach(processReport);
+
+    const averageCapaian = reportCount > 0 ? parseFloat((totalCapaian / reportCount).toFixed(2)) : 0;
+
+    // 3. Capaian per Unit Kerja
+    let capaianUnit: any[] = [];
+    if (unitMap.size > 0) {
+      for (const [name, stats] of unitMap.entries()) {
+        capaianUnit.push({
+          name: name,
+          value: parseFloat((stats.total / stats.count).toFixed(2))
+        });
+      }
+      capaianUnit.sort((a, b) => b.value - a.value);
+    } else {
+      // Fallback: list actual units from db with 0%
+      const dbUnits = await db.execute(sql`
+        SELECT nama 
+        FROM sireva.unit_kerja 
+        WHERE id NOT IN (1, 2) AND (parent_id = 0 OR parent_id = 2)
+        ORDER BY nama
+        LIMIT 7
+      `);
+      
+      capaianUnit = dbUnits.rows.map((u: any) => ({
+        name: u.nama,
+        value: 0
+      }));
+    }
+
+    // 4. IKU Prioritas / Perlu Perhatian
+    let ikuPrioritas: any[] = [];
+    
+    // Program Level
+    const progIkus = await db.execute(sql`
+      select 
+        ip.nama as iku,
+        sp.pengampu as unit,
+        coalesce((select target from sireva.target_indikator_program tip where tip.indikator_id = ip.id and tip.tahun = 2026 limit 1), 0) as target,
+        coalesce((select lsp.realisasi from sireva.laporan_sasaran_program lsp where lsp.indikator_id = ip.id order by lsp.created_at desc limit 1), 0) as realisasi
+      from sireva.indikator_program ip
+      join sireva.sasaran_program sp on sp.id = ip.sasaran_program_id
+    `);
+
+    // Kegiatan Level
+    const kegIkus = await db.execute(sql`
+      select 
+        ik.nama_iku as iku,
+        sk.pengampu as unit,
+        coalesce((select target_nilai from sireva.target_indikator_kegiatan tik where tik.id_iku = ik.id and tik.tahun = 2026 limit 1), 0) as target,
+        coalesce((select lsk.realisasi from sireva.laporan_sasaran_kegiatan lsk where lsk.indikator_id = ik.id order by lsk.created_at desc limit 1), 0) as realisasi
+      from sireva.indikator_kinerja ik
+      join sireva.sasaran_kegiatan sk on sk.id = ik.sk_id
+      where ik.is_active = true and ik.deleted_at is null
+    `);
+
+    const allIkus: any[] = [];
+    const processIku = (r: any) => {
+      const tar = parseFloat(r.target || '0');
+      const real = parseFloat(r.realisasi || '0');
+      if (tar > 0) {
+        const cap = Math.min((real / tar) * 100, 100);
+        const dev = parseFloat((cap - 100).toFixed(2));
+        allIkus.push({
+          iku: r.iku,
+          unit: r.unit || 'Lainnya',
+          target: tar.toString(),
+          realisasi: real.toString(),
+          capaian: cap.toFixed(1) + '%',
+          deviasi: dev.toFixed(1) + '%',
+          capNum: cap,
+          status: cap < 70 ? 'Belum Tercapai' : 'Perlu Perhatian'
+        });
+      }
+    };
+
+    progIkus.rows.forEach(processIku);
+    kegIkus.rows.forEach(processIku);
+
+    // Filter down-performing ones (capaian < 100%)
+    ikuPrioritas = allIkus.filter(i => i.capNum < 100);
+    
+    // Sort by lowest achievement first
+    ikuPrioritas.sort((a, b) => a.capNum - b.capNum);
+    
+    // Limit to 4 rows
+    ikuPrioritas = ikuPrioritas.slice(0, 4).map((item, idx) => ({
+      no: idx + 1,
+      iku: item.iku,
+      unit: item.unit,
+      target: item.target,
+      realisasi: item.realisasi,
+      capaian: item.capaian,
+      deviasi: item.deviasi,
+      status: item.status
+    }));
 
     return {
       ss: Number(ssCount[0]?.count || 0),
       sp: Number(spCount[0]?.count || 0),
       sk: Number(skCount[0]?.count || 0),
-      capaian: 84.5 // Demo value until we have reporting table
+      totalIku: totalIku,
+      capaian: averageCapaian,
+      belumTercapai: reportCount > 0 ? belumTercapai : totalIku,
+      capaianUnit,
+      ikuPrioritas
     };
   } catch (error: any) {
     console.error('Dashboard Stats API Error:', error);
@@ -24,7 +196,11 @@ export default defineEventHandler(async (event) => {
       ss: 0,
       sp: 0,
       sk: 0,
-      capaian: 0
+      totalIku: 0,
+      capaian: 0,
+      belumTercapai: 0,
+      capaianUnit: [],
+      ikuPrioritas: []
     };
   }
 });
