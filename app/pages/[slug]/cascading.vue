@@ -1023,6 +1023,105 @@ const printCascading = async () => {
       align-items: center;
     }
   }
+  
+  /* ── MOBILE RESPONSIVE STYLES ── */
+  @media screen and (max-width: 768px), print and (max-width: 768px) {
+    body {
+      font-size: 8pt !important;
+      padding: 10px !important;
+    }
+    .hdr {
+      padding: 12px !important;
+      margin-bottom: 15px !important;
+    }
+    .hdr h1 {
+      font-size: 13pt !important;
+    }
+    .hdr p {
+      font-size: 8pt !important;
+    }
+    .legend {
+      flex-wrap: wrap !important;
+      gap: 10px !important;
+      margin-bottom: 15px !important;
+    }
+    .legend-item {
+      font-size: 7.5pt !important;
+    }
+    .dot {
+      width: 12px !important;
+      height: 12px !important;
+    }
+    
+    .tree-wrapper {
+      padding: 10px 0 !important;
+      overflow-x: visible !important;
+    }
+    
+    #cascade-tree {
+      min-width: 100% !important;
+      width: 100% !important;
+      transform: none !important;
+      margin-bottom: 0 !important;
+    }
+    
+    .ss-level, .sp-level, .sk-level {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      padding-top: 20px !important;
+      gap: 20px !important;
+      width: 100% !important;
+    }
+    
+    .ss-level::before, .sp-level::before, .sk-level::before {
+      content: '' !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      width: 2px !important;
+      height: 100% !important;
+      z-index: 1 !important;
+    }
+    .ss-level::before { background: #1e3a8a !important; }
+    .sp-level::before { background: #7c3aed !important; }
+    .sk-level::before { background: #059669 !important; }
+    
+    .ss-item, .sp-item, .sk-item {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      width: 100% !important;
+      padding: 0 !important;
+    }
+    
+    .ss-item::before, .ss-item::after,
+    .sp-item::before, .sp-item::after,
+    .sk-item::before, .sk-item::after {
+      display: none !important;
+    }
+    
+    .lan-card, .ss-card, .sp-card, .sk-card {
+      position: relative !important;
+      z-index: 5 !important;
+      margin-top: 0 !important;
+      width: 95% !important;
+      max-width: 340px !important;
+      min-width: auto !important;
+    }
+    
+    .ss-card::before, .sp-card::before, .sk-card::before {
+      display: none !important;
+    }
+    
+    .sp-level {
+      margin-top: 10px !important;
+    }
+    .sk-level {
+      margin-top: 10px !important;
+    }
+  }
 </style>
 </head>
 <body>
