@@ -1,109 +1,9 @@
-<template>
-  <div class="space-y-4">
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 text-center">
-        <h1 class="text-lg font-semibold text-slate-800">Master Unit Kerja</h1>
-      </div>
-
-      <div class="px-5 py-3 border-b border-slate-200 bg-white">
-        <div class="flex w-full justify-end gap-2">
-          <button
-            type="button"
-            @click="printOrgChart"
-            :disabled="printLoading"
-            class="bg-[#2663A3] hover:bg-blue-800 text-white font-bold rounded-lg px-4 py-2 inline-flex items-center gap-2 text-sm shadow disabled:opacity-50 transition-colors"
-          >
-            <span v-if="printLoading" class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-            <IconDownload v-else :size="16" :stroke="'2'" />
-            Cetak / PDF
-          </button>
-        </div>
-      </div>
-
-      <div v-if="loading" class="p-6 text-sm text-slate-500">Memuat data...</div>
-      <div v-else-if="errorMessage" class="p-6 text-sm text-red-600">{{ errorMessage }}</div>
-      <div v-else class="p-5">
-        <Table
-          :columns="columns"
-          :data="tableRows"
-          rowKey="id"
-          :showSearch="true"
-          :showPagination="true"
-          :pageSize="10"
-        >
-          <template #cell-parent="{ row }">
-            <span>{{ row.parent || '-' }}</span>
-          </template>
-
-          <template #cell-aksi="{ row }">
-            <div class="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                @click="openModal(row)"
-                :aria-label="`Edit ${row.nama}`"
-                title="Edit"
-                class="action-btn action-btn-edit"
-              >
-                <IconPencil :size="16" :stroke="'2'" />
-              </button>
-              <button
-                type="button"
-                @click="deleteUnitKerja(row.id)"
-                :aria-label="`Hapus ${row.nama}`"
-                title="Hapus"
-                class="action-btn action-btn-delete"
-              >
-                <IconTrash :size="16" :stroke="'2'" />
-              </button>
-            </div>
-          </template>
-        </Table>
-      </div>
-    </div>
-
-
-
-    <!-- Modal Form -->
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div class="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
-        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-          <h2 class="text-lg font-semibold text-slate-800">{{ isEdit ? 'Edit Unit Kerja' : 'Input Unit Kerja' }}</h2>
-          <button @click="closeModal" class="text-slate-400 hover:text-slate-600">&times;</button>
-        </div>
-        <div class="p-5">
-          <form @submit.prevent="saveUnitKerja" class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Nama Unit Kerja</label>
-              <input v-model="formData.nama" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Parent ID (Opsional)</label>
-              <input v-model="formData.parentId" type="number" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Level (Opsional)</label>
-              <input v-model="formData.level" type="number" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500" />
-            </div>
-            
-            <div class="flex justify-end gap-2 mt-6">
-              <button type="button" @click="closeModal" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-sm transition-colors">Batal</button>
-              <button type="submit" :disabled="isSaving" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50">
-                {{ isSaving ? 'Menyimpan...' : 'Simpan' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-definePageMeta({ layout: 'dashboard' })
 
 import { computed, ref, reactive } from 'vue'
 import { IconPencil, IconTrash, IconPlus, IconDownload } from '@tabler/icons-vue'
 import Table from '@/components/UI/Table.vue'
+
+definePageMeta({ layout: 'dashboard' })
 
 interface UnitKerjaApi {
   id: number
@@ -224,8 +124,6 @@ function printOrgChart() {
 
     const ssListHtml = ssItems ? '<ul class="ss-level">' + ssItems + '</ul>' : '<p style="text-align:center;color:#94a3b8;padding:40px;">Tidak ada data untuk ditampilkan.</p>'
     const printDate = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-    const sOpen = '<' + 'script>'
-    const sClose = '</' + 'script>'
 
     const html = `<!DOCTYPE html>
 <html lang="id">
@@ -653,7 +551,7 @@ function printOrgChart() {
   <button class="btn-print" onclick="window.print()">Cetak / Simpan PDF</button>
 </div>
 
-${sOpen}
+${'<' + 'script>'}
 function adjustScale() {
   var tree = document.getElementById('cascade-tree');
   if (!tree) return;
@@ -682,7 +580,7 @@ if (document.readyState === 'complete') {
 window.addEventListener('resize', adjustScale);
 window.addEventListener('beforeprint', adjustScale);
 window.addEventListener('afterprint', adjustScale);
-${sClose}
+${'</' + 'script>'}
 </body>
 </html>`
 
@@ -820,41 +718,3 @@ async function deleteUnitKerja(id: number) {
     alert(err.message || 'Terjadi kesalahan saat menghapus data')
   }
 }
-</script>
-
-<style scoped>
-.action-btn {
-  height: 1.9rem;
-  width: 1.9rem;
-  border-radius: 0.5rem;
-  border: 1px solid transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.action-btn-edit {
-  color: #1d4ed8;
-  background: #dbeafe;
-  border-color: #bfdbfe;
-}
-
-.action-btn-edit:hover {
-  color: #fff;
-  background: #2563eb;
-  border-color: #2563eb;
-}
-
-.action-btn-delete {
-  color: #b91c1c;
-  background: #fee2e2;
-  border-color: #fecaca;
-}
-
-.action-btn-delete:hover {
-  color: #fff;
-  background: #dc2626;
-  border-color: #dc2626;
-}
-</style>

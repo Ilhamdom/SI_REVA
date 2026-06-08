@@ -21,6 +21,11 @@ function parseDbUrl(url: string | undefined) {
 }
 
 export default defineNuxtConfig({
+  ignore: [
+    'sireva/**',
+    'scratch/**',
+    'sireva'
+  ],
   // Improved DB validation - warn instead of crash
   hooks: {
     'nitro:init': () => {
