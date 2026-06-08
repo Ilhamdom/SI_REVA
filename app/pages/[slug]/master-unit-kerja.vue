@@ -99,11 +99,11 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'dashboard' })
-
 import { computed, ref, reactive } from 'vue'
 import { IconPencil, IconTrash, IconPlus, IconDownload } from '@tabler/icons-vue'
 import Table from '@/components/UI/Table.vue'
+
+definePageMeta({ layout: 'dashboard' })
 
 interface UnitKerjaApi {
   id: number
