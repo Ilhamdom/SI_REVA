@@ -98,29 +98,12 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed, ref, reactive } from 'vue'
 import { IconPencil, IconTrash, IconPlus, IconDownload } from '@tabler/icons-vue'
 import Table from '@/components/UI/Table.vue'
 
 definePageMeta({ layout: 'dashboard' })
-
-interface UnitKerjaApi {
-  id: number
-  nama: string | null
-  level: number | null
-  parentId: number | null
-  createdAt: string | null
-  updatedAt: string | null
-}
-
-interface UnitKerjaRow {
-  no: number
-  id: number
-  nama: string
-  parent: string
-  aksi: string
-}
 
 const columns = [
   { key: 'no', label: 'No.', className: 'text-center w-16' },
@@ -140,7 +123,7 @@ function printOrgChart() {
     // Find Kepala LAN (level === 0)
     const kepalaLanNode = flatList.find(u => u.level === 0) || flatList.find(u => (u.nama || '').toLowerCase().includes('kepala lan'))
     
-    const nodeMap = new Map<number, any>()
+    const nodeMap = new Map()
     for (const item of flatList) {
       nodeMap.set(item.id, {
         id: item.id,
@@ -151,8 +134,8 @@ function printOrgChart() {
       })
     }
 
-    const eselon1Nodes: any[] = []
-    const directEselon2Nodes: any[] = []
+    const eselon1Nodes = []
+    const directEselon2Nodes = []
 
     for (const node of nodeMap.values()) {
       if (node.id === kepalaLanNode?.id) continue
@@ -172,12 +155,12 @@ function printOrgChart() {
     directEselon2Nodes.sort((a, b) => a.nama.localeCompare(b.nama, 'id', { sensitivity: 'base' }))
     for (const node of nodeMap.values()) {
       if (node.children && node.children.length > 0) {
-        node.children.sort((a: any, b: any) => a.nama.localeCompare(b.nama, 'id', { sensitivity: 'base' }))
+        node.children.sort((a, b) => a.nama.localeCompare(b.nama, 'id', { sensitivity: 'base' }))
       }
     }
 
     // Build the Eselon 1 level HTML
-    const spItems = [...eselon1Nodes, ...directEselon2Nodes].map((sp: any) => {
+    const spItems = [...eselon1Nodes, ...directEselon2Nodes].map((sp) => {
       const isEselon2 = sp.level === 2
       const badgeText = isEselon2 ? 'ESELON II' : 'ESELON I'
       const badgeClass = isEselon2 ? 'sk-badge' : 'sp-badge'
@@ -185,7 +168,7 @@ function printOrgChart() {
       
       let skItems = ''
       if (sp.children && sp.children.length > 0) {
-        skItems = sp.children.map((sk: any) => `
+        skItems = sp.children.map((sk) => `
           <li class="sk-item">
             <div class="sk-card">
               <div class="badge sk-badge">ESELON II</div>
@@ -224,8 +207,35 @@ function printOrgChart() {
 
     const ssListHtml = ssItems ? '<ul class="ss-level">' + ssItems + '</ul>' : '<p style="text-align:center;color:#94a3b8;padding:40px;">Tidak ada data untuk ditampilkan.</p>'
     const printDate = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-    const sOpen = '<' + 'script>'
-    const sClose = '</' + 'script>'
+
+    const adjustScriptCode = [
+      'function adjustScale() {',
+      '  var tree = document.getElementById("cascade-tree");',
+      '  if (!tree) return;',
+      '  tree.style.transform = "none";',
+      '  tree.style.transformOrigin = "top center";',
+      '  tree.style.marginBottom = "0px";',
+      '  if (window.innerWidth <= 768) return;',
+      '  var tw = tree.scrollWidth;',
+      '  var pw = document.documentElement.clientWidth;',
+      '  if (tw > pw) {',
+      '    var scale = pw / tw;',
+      '    tree.style.transform = "scale(" + scale + ")";',
+      '    tree.style.marginBottom = ((scale - 1) * tree.scrollHeight) + "px";',
+      '  }',
+      '}',
+      'adjustScale();',
+      'setTimeout(adjustScale, 100);',
+      'if (document.readyState === "complete") {',
+      '  adjustScale();',
+      '} else {',
+      '  window.addEventListener("DOMContentLoaded", adjustScale);',
+      '  window.addEventListener("load", adjustScale);',
+      '}',
+      'window.addEventListener("resize", adjustScale);',
+      'window.addEventListener("beforeprint", adjustScale);',
+      'window.addEventListener("afterprint", adjustScale);',
+    ].join('\n')
 
     const html = `<!DOCTYPE html>
 <html lang="id">
@@ -693,12 +703,16 @@ ${sClose}
     }
     win.document.write(html)
     win.document.close()
+    // Inject script using createElement to avoid </script> in template literals
+    const sc = win.document.createElement('script')
+    sc.textContent = adjustScriptCode
+    win.document.body.appendChild(sc)
   } finally {
     printLoading.value = false
   }
 }
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json())
+const fetcher = (url) => fetch(url).then((r) => r.json())
 const { data, error, pending, refresh } = useFetch('/api/unit-kerja', { lazy: true, default: () => [] })
 
 const loading = computed(() => pending.value && !data.value)
@@ -708,10 +722,10 @@ const errorMessage = computed(() => {
   return error.value instanceof Error ? error.value.message : 'Gagal memuat data unit kerja.'
 })
 
-const units = computed<UnitKerjaApi[]>(() => (Array.isArray(data.value) ? data.value : []))
+const units = computed(() => (Array.isArray(data.value) ? data.value : []))
 
-const tableRows = computed<UnitKerjaRow[]>(() => {
-  const byId = new Map<number, UnitKerjaApi>()
+const tableRows = computed(() => {
+  const byId = new Map()
   for (const item of units.value) {
     byId.set(item.id, item)
   }
@@ -739,13 +753,13 @@ const showModal = ref(false)
 const isEdit = ref(false)
 const isSaving = ref(false)
 const formData = reactive({
-  id: null as number | null,
+  id: null,
   nama: '',
-  level: null as number | null,
-  parentId: null as number | null
+  level: null,
+  parentId: null
 })
 
-function openModal(row?: UnitKerjaRow) {
+function openModal(row) {
   isEdit.value = !!row
   if (row) {
     formData.id = row.id
@@ -791,14 +805,14 @@ async function saveUnitKerja() {
     
     closeModal()
     await refresh()
-  } catch (err: any) {
+  } catch (err) {
     alert(err.message || 'Terjadi kesalahan saat menyimpan data')
   } finally {
     isSaving.value = false
   }
 }
 
-async function deleteUnitKerja(id: number) {
+async function deleteUnitKerja(id) {
   if (!confirm('Apakah Anda yakin ingin menghapus unit kerja ini?')) return
   
   try {
@@ -816,7 +830,7 @@ async function deleteUnitKerja(id: number) {
     }
     
     await refresh()
-  } catch (err: any) {
+  } catch (err) {
     alert(err.message || 'Terjadi kesalahan saat menghapus data')
   }
 }
