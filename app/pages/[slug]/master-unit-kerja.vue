@@ -99,11 +99,11 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'dashboard' })
-
 import { computed, ref, reactive } from 'vue'
 import { IconPencil, IconTrash, IconPlus, IconDownload } from '@tabler/icons-vue'
 import Table from '@/components/UI/Table.vue'
+
+definePageMeta({ layout: 'dashboard' })
 
 interface UnitKerjaApi {
   id: number
@@ -195,19 +195,22 @@ function printOrgChart() {
         `).join('')
       }
 
+      const skLevelHtml = skItems ? `<ul class="sk-level">${skItems}</ul>` : ''
+
       return `
         <li class="sp-item">
           <div class="sp-card" ${cardStyle}>
             <div class="badge ${badgeClass}">${badgeText}</div>
             <div class="card-text">${sp.nama}</div>
           </div>
-          ${skItems ? `<ul class="sk-level">${skItems}</ul>` : ''}
+          ${skLevelHtml}
         </li>
       `
     }).join('')
 
     // Build Kepala LAN HTML
     const kepalaLanName = kepalaLanNode ? kepalaLanNode.nama : 'Kepala LAN'
+    const spLevelHtml = spItems ? `<ul class="sp-level">${spItems}</ul>` : ''
     const ssItems = `
       <li class="ss-item">
         <div class="ss-card">
@@ -215,10 +218,11 @@ function printOrgChart() {
           <div class="ss-title">${kepalaLanName}</div>
           <div class="ss-sub">&#128100; Lembaga Administrasi Negara</div>
         </div>
-        ${spItems ? `<ul class="sp-level">${spItems}</ul>` : ''}
+        ${spLevelHtml}
       </li>
     `
 
+    const ssListHtml = ssItems ? '<ul class="ss-level">' + ssItems + '</ul>' : '<p style="text-align:center;color:#94a3b8;padding:40px;">Tidak ada data untuk ditampilkan.</p>'
     const printDate = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
     const html = `<!DOCTYPE html>
@@ -232,6 +236,8 @@ function printOrgChart() {
   body {
     font-family: 'Segoe UI', Arial, sans-serif;
     background: #fff; color: #1e293b; font-size: 6.5pt;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* ── HEADER ── */
@@ -286,8 +292,8 @@ function printOrgChart() {
     position: absolute;
     top: 0; left: 50%;
     transform: translateX(-50%);
-    width: 1.5px; height: 24px;
-    background: #1e3a8a;
+    width: 0; height: 24px;
+    border-left: 1.5px solid #1e3a8a;
   }
 
   /* Each SS item */
@@ -304,16 +310,16 @@ function printOrgChart() {
     content: '';
     position: absolute;
     top: 0; right: 50%;
-    width: 50%; height: 1.5px;
-    background: #1e3a8a;
+    width: 50%; height: 0;
+    border-top: 1.5px solid #1e3a8a;
   }
   /* Right horizontal arm (toward right sibling) */
   .ss-item::after {
     content: '';
     position: absolute;
     top: 0; left: 50%;
-    width: 50%; height: 1.5px;
-    background: #1e3a8a;
+    width: 50%; height: 0;
+    border-top: 1.5px solid #1e3a8a;
   }
   /* Single child — no horizontal arms */
   .ss-item:only-child::before,
@@ -333,8 +339,8 @@ function printOrgChart() {
     position: absolute;
     top: -24px; left: 50%;
     transform: translateX(-50%);
-    width: 1.5px; height: 24px;
-    background: #1e3a8a;
+    width: 0; height: 24px;
+    border-left: 1.5px solid #1e3a8a;
   }
 
   /* ── SS CARD ── */
@@ -378,8 +384,8 @@ function printOrgChart() {
     position: absolute;
     top: 0; left: 50%;
     transform: translateX(-50%);
-    width: 1.5px; height: 24px;
-    background: #7c3aed;
+    width: 0; height: 24px;
+    border-left: 1.5px solid #7c3aed;
   }
 
   /* Each SP item */
@@ -396,16 +402,16 @@ function printOrgChart() {
     content: '';
     position: absolute;
     top: 0; right: 50%;
-    width: 50%; height: 1.5px;
-    background: #7c3aed;
+    width: 50%; height: 0;
+    border-top: 1.5px solid #7c3aed;
   }
   /* Right horizontal arm (toward right sibling) */
   .sp-item::after {
     content: '';
     position: absolute;
     top: 0; left: 50%;
-    width: 50%; height: 1.5px;
-    background: #7c3aed;
+    width: 50%; height: 0;
+    border-top: 1.5px solid #7c3aed;
   }
   /* Single child — no horizontal arms */
   .sp-item:only-child::before,
@@ -425,8 +431,8 @@ function printOrgChart() {
     position: absolute;
     top: -24px; left: 50%;
     transform: translateX(-50%);
-    width: 1.5px; height: 24px;
-    background: #7c3aed;
+    width: 0; height: 24px;
+    border-left: 1.5px solid #7c3aed;
   }
 
   /* ── SK level (children of SP) ── */
@@ -445,8 +451,8 @@ function printOrgChart() {
     position: absolute;
     top: 0; left: 50%;
     transform: translateX(-50%);
-    width: 1.5px; height: 18px;
-    background: #059669;
+    width: 0; height: 18px;
+    border-left: 1.5px solid #059669;
   }
 
   .sk-item {
@@ -461,15 +467,15 @@ function printOrgChart() {
     content: '';
     position: absolute;
     top: 0; right: 50%;
-    width: 50%; height: 1.5px;
-    background: #059669;
+    width: 50%; height: 0;
+    border-top: 1.5px solid #059669;
   }
   .sk-item::after {
     content: '';
     position: absolute;
     top: 0; left: 50%;
-    width: 50%; height: 1.5px;
-    background: #059669;
+    width: 50%; height: 0;
+    border-top: 1.5px solid #059669;
   }
   .sk-item:only-child::before,
   .sk-item:only-child::after  { display: none; }
@@ -485,8 +491,8 @@ function printOrgChart() {
     position: absolute;
     top: -18px; left: 50%;
     transform: translateX(-50%);
-    width: 1.5px; height: 18px;
-    background: #059669;
+    width: 0; height: 18px;
+    border-left: 1.5px solid #059669;
   }
 
   .btn-wrap { text-align:center; margin-top:20px; padding-bottom:12px; }
@@ -514,7 +520,7 @@ function printOrgChart() {
       padding: 0;
     }
     #cascade-tree {
-      min-width: auto;
+      min-width: max-content;
       display: flex;
     }
   }
@@ -575,13 +581,13 @@ function printOrgChart() {
       top: 0 !important;
       left: 50% !important;
       transform: translateX(-50%) !important;
-      width: 2px !important;
+      width: 0 !important;
       height: 100% !important;
       z-index: 1 !important;
     }
-    .ss-level::before { background: #1e3a8a !important; }
-    .sp-level::before { background: #7c3aed !important; }
-    .sk-level::before { background: #059669 !important; }
+    .ss-level::before { border-left: 2px solid #1e3a8a !important; }
+    .sp-level::before { border-left: 2px solid #7c3aed !important; }
+    .sk-level::before { border-left: 2px solid #059669 !important; }
     
     .ss-item, .sp-item, .sk-item {
       display: flex !important;
@@ -637,7 +643,7 @@ function printOrgChart() {
       <div class="badge" style="background:#475569; color:#fff; border:1px solid #64748b; margin-bottom:2px;">INSTANSI</div>
       <div class="lan-title">Lembaga Administrasi Negara (LAN)</div>
     </div>
-    ${ssItems ? `<ul class="ss-level">${ssItems}</ul>` : '<p style="text-align:center;color:#94a3b8;padding:40px;">Tidak ada data untuk ditampilkan.</p>'}
+    ${ssListHtml}
   </div>
 </div>
 
@@ -645,6 +651,36 @@ function printOrgChart() {
   <button class="btn-print" onclick="window.print()">Cetak / Simpan PDF</button>
 </div>
 
+${'<' + 'script>'}
+function adjustScale() {
+  var tree = document.getElementById('cascade-tree');
+  if (!tree) return;
+  tree.style.transform = 'none';
+  tree.style.transformOrigin = 'top center';
+  tree.style.marginBottom = '0px';
+
+  if (window.innerWidth <= 768) return;
+
+  var tw = tree.scrollWidth;
+  var pw = document.documentElement.clientWidth;
+  if (tw > pw) {
+    var scale = pw / tw;
+    tree.style.transform = 'scale(' + scale + ')';
+    tree.style.marginBottom = ((scale - 1) * tree.scrollHeight) + 'px';
+  }
+}
+adjustScale();
+setTimeout(adjustScale, 100);
+if (document.readyState === 'complete') {
+  adjustScale();
+} else {
+  window.addEventListener('DOMContentLoaded', adjustScale);
+  window.addEventListener('load', adjustScale);
+}
+window.addEventListener('resize', adjustScale);
+window.addEventListener('beforeprint', adjustScale);
+window.addEventListener('afterprint', adjustScale);
+${'</' + 'script>'}
 </body>
 </html>`
 

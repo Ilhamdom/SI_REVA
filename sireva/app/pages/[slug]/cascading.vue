@@ -400,14 +400,6 @@
 </template>
 
 <script setup lang="ts">
-/**
- * Cascading Kinerja — Interactive Drill-Down Edition
- * Hirarki 4 Level:
- * Sasaran Strategis → Indikator Strategis → Sasaran Program → Sasaran Kegiatan
- */
-
-definePageMeta({ layout: 'dashboard' })
-
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
@@ -426,6 +418,14 @@ import {
 } from '@tabler/icons-vue'
 import FilterDropdown from '@/components/FilterDropdown.vue'
 import useSWRV from 'swrv'
+
+/**
+ * Cascading Kinerja — Interactive Drill-Down Edition
+ * Hirarki 4 Level:
+ * Sasaran Strategis → Indikator Strategis → Sasaran Program → Sasaran Kegiatan
+ */
+
+definePageMeta({ layout: 'dashboard' })
 
 // ──────────────────── State ────────────────────
 const selectedYear = ref('2025')
@@ -618,6 +618,8 @@ const printCascading = async () => {
           </li>`
         }).join('')
 
+        const skLevelHtml = skItems ? `<ul class="sk-level">${skItems}</ul>` : ''
+
         return `<li class="sp-item">
           <div class="sp-card">
             <div class="badge sp-badge">SP</div>
@@ -628,9 +630,11 @@ const printCascading = async () => {
               <span class="stat green">&#127919; Target ${year}: <b>${targetStr}</b></span>
             </div>
           </div>
-          ${skItems ? `<ul class="sk-level">${skItems}</ul>` : ''}
+          ${skLevelHtml}
         </li>`
       }).join('')
+
+      const spLevelHtml = spItems ? `<ul class="sp-level">${spItems}</ul>` : '<p class="empty-msg">Belum ada Sasaran Program</p>'
 
       return `<div class="ss-block">
         <div class="ss-card">
@@ -642,7 +646,7 @@ const printCascading = async () => {
             <span class="stat light">SK: <b>${totalSk}</b></span>
           </div>
         </div>
-        ${spItems ? `<ul class="sp-level">${spItems}</ul>` : '<p class="empty-msg">Belum ada Sasaran Program</p>'}
+        ${spLevelHtml}
       </div>`
     }).join('')
 
@@ -659,6 +663,8 @@ const printCascading = async () => {
   body {
     font-family: 'Segoe UI', Arial, sans-serif;
     background: #fff; color: #1e293b; font-size: 6.5pt;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* ── HEADER ── */
@@ -752,8 +758,8 @@ const printCascading = async () => {
     position: absolute;
     top: 0; left: 50%;
     transform: translateX(-50%);
-    width: 1.5px; height: 24px;
-    background: #7c3aed;
+    width: 0; height: 24px;
+    border-left: 1.5px solid #7c3aed;
   }
 
   /* Each SP item */
@@ -770,16 +776,16 @@ const printCascading = async () => {
     content: '';
     position: absolute;
     top: 0; right: 50%;
-    width: 50%; height: 1.5px;
-    background: #7c3aed;
+    width: 50%; height: 0;
+    border-top: 1.5px solid #7c3aed;
   }
   /* Right horizontal arm (toward right sibling) */
   .sp-item::after {
     content: '';
     position: absolute;
     top: 0; left: 50%;
-    width: 50%; height: 1.5px;
-    background: #7c3aed;
+    width: 50%; height: 0;
+    border-top: 1.5px solid #7c3aed;
   }
   /* Single child — no horizontal arms */
   .sp-item:only-child::before,
@@ -799,8 +805,8 @@ const printCascading = async () => {
     position: absolute;
     top: -24px; left: 50%;
     transform: translateX(-50%);
-    width: 1.5px; height: 24px;
-    background: #7c3aed;
+    width: 0; height: 24px;
+    border-left: 1.5px solid #7c3aed;
   }
 
   /* ── SK level (children of SP) ── */
@@ -819,8 +825,8 @@ const printCascading = async () => {
     position: absolute;
     top: 0; left: 50%;
     transform: translateX(-50%);
-    width: 1.5px; height: 18px;
-    background: #059669;
+    width: 0; height: 18px;
+    border-left: 1.5px solid #059669;
   }
 
   .sk-item {
@@ -835,15 +841,15 @@ const printCascading = async () => {
     content: '';
     position: absolute;
     top: 0; right: 50%;
-    width: 50%; height: 1.5px;
-    background: #059669;
+    width: 50%; height: 0;
+    border-top: 1.5px solid #059669;
   }
   .sk-item::after {
     content: '';
     position: absolute;
     top: 0; left: 50%;
-    width: 50%; height: 1.5px;
-    background: #059669;
+    width: 50%; height: 0;
+    border-top: 1.5px solid #059669;
   }
   .sk-item:only-child::before,
   .sk-item:only-child::after  { display: none; }
@@ -859,8 +865,8 @@ const printCascading = async () => {
     position: absolute;
     top: -18px; left: 50%;
     transform: translateX(-50%);
-    width: 1.5px; height: 18px;
-    background: #059669;
+    width: 0; height: 18px;
+    border-left: 1.5px solid #059669;
   }
 
   .empty-msg { color:#94a3b8; font-style:italic; font-size:6pt; margin-top:8px; }
@@ -871,9 +877,21 @@ const printCascading = async () => {
     padding:8px 24px; background:#1e3a8a; color:#fff; border:none;
     border-radius:7px; font-weight:700; font-size:9pt; cursor:pointer;
   }
+  #cascade-tree {
+    min-width: max-content;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
   @media print {
     .btn-wrap { display:none; }
     body { background:white; }
+    #cascade-tree {
+      min-width: max-content;
+      padding: 0;
+    }
   }
 
   /* ── MOBILE RESPONSIVE STYLES ── */
@@ -932,13 +950,13 @@ const printCascading = async () => {
       top: 0 !important;
       left: 50% !important;
       transform: translateX(-50%) !important;
-      width: 2px !important;
+      width: 0 !important;
       height: 100% !important;
       z-index: 1 !important;
     }
-    .ss-level::before { background: #1e3a8a !important; }
-    .sp-level::before { background: #7c3aed !important; }
-    .sk-level::before { background: #059669 !important; }
+    .ss-level::before { border-left: 2px solid #1e3a8a !important; }
+    .sp-level::before { border-left: 2px solid #7c3aed !important; }
+    .sk-level::before { border-left: 2px solid #059669 !important; }
     
     .ss-item, .sp-item, .sk-item {
       display: flex !important;
@@ -996,22 +1014,36 @@ const printCascading = async () => {
   <button class="btn-print" onclick="window.print()">&#128424; Cetak / Simpan PDF</button>
 </div>
 
-<script>
-// Auto-scale the tree to fit page width (only on desktop/larger screens)
-window.addEventListener('load', function () {
-  if (window.innerWidth <= 768) return;
+${'<' + 'script>'}
+function adjustScale() {
   var tree = document.getElementById('cascade-tree');
   if (!tree) return;
+  tree.style.transform = 'none';
+  tree.style.transformOrigin = 'top center';
+  tree.style.marginBottom = '0px';
+
+  if (window.innerWidth <= 768) return;
+
   var tw = tree.scrollWidth;
   var pw = document.documentElement.clientWidth;
   if (tw > pw) {
     var scale = pw / tw;
-    tree.style.transformOrigin = 'top center';
     tree.style.transform = 'scale(' + scale + ')';
     tree.style.marginBottom = ((scale - 1) * tree.scrollHeight) + 'px';
   }
-});
-<\/script>
+}
+adjustScale();
+setTimeout(adjustScale, 100);
+if (document.readyState === 'complete') {
+  adjustScale();
+} else {
+  window.addEventListener('DOMContentLoaded', adjustScale);
+  window.addEventListener('load', adjustScale);
+}
+window.addEventListener('resize', adjustScale);
+window.addEventListener('beforeprint', adjustScale);
+window.addEventListener('afterprint', adjustScale);
+${'</' + 'script>'}
 </body>
 </html>`
 

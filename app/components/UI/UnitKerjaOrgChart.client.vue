@@ -101,7 +101,7 @@ async function exportPDF() {
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true, logging: false },
       jsPDF: { unit: 'in', format: 'a3', orientation: 'landscape' }
-    }).from(chartAreaRef.value).save()
+    }).from(chartAreaRef.value as any).save()
   } catch (err) {
     console.error('PDF export failed:', err)
   } finally {

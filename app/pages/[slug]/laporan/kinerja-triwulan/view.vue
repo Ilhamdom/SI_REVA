@@ -141,21 +141,29 @@
       </div>
 
       <!-- Section 5: Lampiran -->
-      <div v-if="lampiranFiles.length > 0" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden print:hidden">
-        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
-          <IconPaperclip class="text-slate-500" :size="20" stroke-width="2.5" />
+      <div v-if="lampiranFiles.length > 0" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden print:shadow-none print:border-none print:mb-8">
+        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center gap-3 print:bg-white print:px-0">
+          <IconPaperclip class="text-slate-500 print:text-[#2663A3]" :size="20" stroke-width="2.5" />
           <h2 class="text-slate-800 font-extrabold text-sm uppercase tracking-wider">LAMPIRAN</h2>
         </div>
-        <div class="p-6 md:p-8">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div v-for="(file, idx) in lampiranFiles" :key="idx" class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              <div class="flex items-center gap-3 overflow-hidden">
-                <IconFileText class="text-[#2663A3] flex-shrink-0" :size="20" />
-                <span class="text-sm font-medium text-slate-700 truncate">{{ file.name }}</span>
+        <div class="p-6 md:p-8 print:p-0">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-1">
+            <div v-for="(file, idx) in lampiranFiles" :key="idx" class="flex flex-col p-4 bg-slate-50 border border-slate-200 rounded-2xl print:bg-white print:border-none print:p-0 print:mb-6">
+              <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-3 overflow-hidden">
+                  <IconFileText class="text-[#2663A3] flex-shrink-0" :size="20" />
+                  <span class="text-sm font-bold text-slate-700 truncate print:text-xs">{{ file.name }}</span>
+                </div>
+                <a :href="file.url" download class="text-blue-500 hover:text-blue-700 transition-colors p-1 font-bold text-xs print:hidden">
+                  Download
+                </a>
               </div>
-              <a :href="file.url" download class="text-blue-500 hover:text-blue-700 transition-colors p-1 font-bold text-xs">
-                Download
-              </a>
+              <div v-if="isImage(file)" class="mt-3 overflow-hidden rounded-xl border border-slate-200 max-w-full print:max-w-2xl print:border-slate-300">
+                <img :src="file.url" :alt="file.name" class="w-full h-auto object-cover max-h-[350px] print:max-h-none" />
+              </div>
+              <div v-else-if="isPdf(file)" class="mt-3 overflow-hidden rounded-xl border border-slate-200 w-full h-[450px] print:hidden">
+                <iframe :src="file.url" class="w-full h-full" frameborder="0"></iframe>
+              </div>
             </div>
           </div>
         </div>
@@ -173,6 +181,19 @@ import { IconArrowLeft, IconFileText, IconClipboardList, IconPrinter, IconPaperc
 
 const route = useRoute()
 const laporanId = route.query.id as string
+
+function isImage(file: any) {
+  if (!file || !file.url) return false
+  if (file.url.startsWith('data:image/')) return true
+  const imageExtensions = /\.(jpg|jpeg|png|webp|gif|svg)$/i
+  return imageExtensions.test(file.name)
+}
+
+function isPdf(file: any) {
+  if (!file || !file.url) return false
+  if (file.url.startsWith('data:application/pdf') || file.url.startsWith('data:application/octet-stream;base64,JVBERi')) return true
+  return /\.pdf$/i.test(file.name)
+}
 
 const loading = ref(true)
 const reportData = ref<any>(null)
