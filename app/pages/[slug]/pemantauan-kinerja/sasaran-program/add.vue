@@ -130,8 +130,9 @@
                   required
                   maxlength="20"
                   class="w-full md:w-1/3 bg-white border-2 border-slate-200 rounded-xl px-4 py-2.5 font-bold text-[#2663A3] focus:outline-none focus:border-[#2663A3] transition-all"
-                  placeholder="Input Realisasi (Angka Bulat)"
+                  placeholder="Input Realisasi"
                 />
+                <p class="text-[11px] font-medium text-slate-400 mt-1.5 ml-1">* Hanya menerima angka bulat (tanpa titik/koma/desimal)</p>
               </td>
             </tr>
 

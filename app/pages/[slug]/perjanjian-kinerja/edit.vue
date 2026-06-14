@@ -161,12 +161,17 @@ definePageMeta({ layout: 'dashboard' })
 
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import useSWRV from 'swrv';
 import { IconArrowLeft, IconPencil, IconCheck } from '@tabler/icons-vue';
 
 const router = useRouter();
 const route = useRoute();
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 // Fetch Data Referensi
+const { data: units } = useSWRV('/api/unit-kerja', fetcher);
+const { data: sasaranList } = useSWRV('/api/sasaran-strategis', fetcher);
+const { data: indikatorList } = useSWRV('/api/indikator-kinerja', fetcher);
 
 // Deduplicated Sasaran List
 const uniqueSasaranList = computed(() => {

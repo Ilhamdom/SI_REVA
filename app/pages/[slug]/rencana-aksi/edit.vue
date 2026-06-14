@@ -18,25 +18,25 @@
       </div>
 
       <form v-else @submit.prevent="handleSubmit" class="space-y-6">
-        <!-- Section 01: Sasaran Kegiatan -->
+        <!-- Section 01: Sasaran Program & Indikator Kinerja -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div class="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center gap-3">
             <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[#2663A3]">
               <IconTarget :size="18" stroke-width="2.5" />
             </div>
-            <h2 class="text-sm font-black text-[#2663A3] uppercase tracking-wider">Perencanaan - Sasaran Kegiatan</h2>
+            <h2 class="text-sm font-black text-[#2663A3] uppercase tracking-wider">Perencanaan - Sasaran Program</h2>
           </div>
           
           <div class="p-8 space-y-6">
-            <!-- Sasaran Kegiatan -->
+            <!-- Sasaran Program -->
             <div class="space-y-2">
-              <label class="block text-sm font-bold text-slate-700 ml-1">Sasaran Kegiatan</label>
+              <label class="block text-sm font-bold text-slate-700 ml-1">Sasaran Program</label>
               <select 
-                v-model="form.sasaranId" 
+                v-model="form.sasaranProgramId" 
                 class="field-input bg-slate-50 cursor-not-allowed"
                 disabled
               >
-                <option v-for="s in filteredSasaranList" :key="s.id" :value="s.id">{{ s.sasaranText }}</option>
+                <option v-for="s in filteredSasaranProgramList" :key="s.id" :value="s.id">{{ s.namaSp }}</option>
               </select>
             </div>
 
@@ -48,7 +48,7 @@
                 class="field-input bg-slate-50 cursor-not-allowed"
                 disabled
               >
-                <option v-for="i in filteredIndikatorList" :key="i.id" :value="i.id">{{ i.namaIndikator }}</option>
+                <option v-for="i in filteredIndikatorList" :key="i.id" :value="i.id">{{ i.namaSk }}</option>
               </select>
             </div>
           </div>
@@ -69,11 +69,26 @@
                 <label class="block text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Rencana Aksi / Aktivitas <span class="text-red-500">*</span></label>
                 <textarea 
                   v-model="form.namaAksi" 
-                  rows="3"
+                  rows="4"
                   class="field-input resize-none"
-                  placeholder="Masukkan deskripsi rencana aksi..."
+                  placeholder="Masukkan deskripsi rencana aksi (minimal 10 kalimat)..."
                   required
                 ></textarea>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 px-1">
+                  <span class="text-[11px] text-slate-400 font-medium">
+                    * Setiap kalimat wajib diakhiri tanda baca titik (.), seru (!), atau tanya (?).
+                  </span>
+                  <span 
+                    :class="[
+                      'text-xs font-black px-2 py-0.5 rounded-lg border inline-flex items-center gap-1 self-start sm:self-auto',
+                      countSentences(form.namaAksi) >= 10 
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                        : 'bg-rose-50 text-rose-600 border-rose-200'
+                    ]"
+                  >
+                    {{ countSentences(form.namaAksi) }} / 10 Kalimat
+                  </span>
+                </div>
               </div>
 
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -130,12 +145,13 @@
 
 definePageMeta({ layout: 'dashboard' })
 
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { 
   IconArrowLeft, IconCheck, IconTarget, 
   IconListDetails, IconX, IconDeviceFloppy 
 } from '@tabler/icons-vue';
+import useSWRV from 'swrv';
 
 const router = useRouter();
 const route = useRoute();
@@ -150,7 +166,7 @@ const submitting = ref(false);
 
 const form = ref<any>({
   id: id,
-  sasaranId: null,
+  sasaranProgramId: null,
   indikatorId: null,
   namaAksi: '',
   target: 0,
@@ -160,17 +176,42 @@ const form = ref<any>({
 });
 
 // Fetchers
+const fetcher = (url: string) => fetch(url).then(r => r.json());
+const { data: rawSasaranProgram } = useSWRV('/api/sasaran-program', fetcher);
+const { data: rawSasaranKegiatan } = useSWRV('/api/sasaran-kegiatan', fetcher);
 
-// Computed / Filters
-const filteredSasaranList = computed(() => {
-  if (!kegiatanList.value) return [];
-  return (kegiatanList.value as any[]);
+// Computed / Filters for display labels in read-only mode
+const filteredSasaranProgramList = computed(() => {
+  if (!rawSasaranProgram.value) return [];
+  const list = Array.isArray(rawSasaranProgram.value) ? rawSasaranProgram.value : (rawSasaranProgram.value.data || []);
+  
+  const uniquePrograms = new Map();
+  for (const item of list) {
+    if (!item.id) continue;
+    if (!uniquePrograms.has(item.id)) {
+      uniquePrograms.set(item.id, {
+        id: item.id,
+        namaSp: item.sasaran_program_text
+      });
+    }
+  }
+  return Array.from(uniquePrograms.values());
 });
 
 const filteredIndikatorList = computed(() => {
-  if (!form.value.sasaranId || !kegiatanList.value) return [];
-  const sasaran = (kegiatanList.value as any[]).find(s => s.id === form.value.sasaranId);
-  return sasaran?.indikators || [];
+  if (!rawSasaranKegiatan.value) return [];
+  const list = Array.isArray(rawSasaranKegiatan.value) ? rawSasaranKegiatan.value : (rawSasaranKegiatan.value.data || []);
+  
+  const uniqueKegiatan = new Map();
+  for (const item of list) {
+    if (!uniqueKegiatan.has(item.id)) {
+      uniqueKegiatan.set(item.id, {
+        id: item.id,
+        namaSk: item.sasaranText || item.sasaran_kegiatan_text
+      });
+    }
+  }
+  return Array.from(uniqueKegiatan.values());
 });
 
 onMounted(async () => {
@@ -185,13 +226,9 @@ onMounted(async () => {
     const existingData = Array.isArray(res) ? res[0] : res;
     
     if (existingData) {
-      // Find parent sasaran from kegiatanList
-      // Since existingData.indikatorId is the primary link
-      // We might need to wait for kegiatanList or search through it
-      
       form.value = {
         id: existingData.id,
-        sasaranId: null, // Will be set below
+        sasaranProgramId: null, // Set dynamically
         indikatorId: existingData.indikatorId,
         namaAksi: existingData.namaRencanaAksi,
         target: Number(existingData.target || 0),
@@ -200,8 +237,7 @@ onMounted(async () => {
         tw3: Number(existingData.tw3 || 0),
       };
       
-      // Look for parent sasaran
-      if (kegiatanList.value) {
+      if (rawSasaranKegiatan.value) {
         findParentSasaran();
       }
     }
@@ -212,23 +248,36 @@ onMounted(async () => {
   }
 });
 
-import { watch } from 'vue';
-watch(() => kegiatanList.value, () => {
-  if (kegiatanList.value && form.value.indikatorId && !form.value.sasaranId) {
+watch(() => rawSasaranKegiatan.value, () => {
+  if (rawSasaranKegiatan.value && form.value.indikatorId && !form.value.sasaranProgramId) {
     findParentSasaran();
   }
 });
 
 function findParentSasaran() {
-  const sasaran = (kegiatanList.value as any[]).find(s => 
-    s.indikators?.some((i: any) => i.id === form.value.indikatorId)
-  );
-  if (sasaran) {
-    form.value.sasaranId = sasaran.id;
+  const skList = Array.isArray(rawSasaranKegiatan.value) ? rawSasaranKegiatan.value : (rawSasaranKegiatan.value?.data || []);
+  const sk = skList.find((item: any) => Number(item.id) === Number(form.value.indikatorId));
+  if (sk) {
+    form.value.sasaranProgramId = sk.spId;
   }
 }
 
+// Helper for sentence counting
+const countSentences = (text: string) => {
+  if (!text) return 0;
+  const clean = text.trim();
+  if (!clean) return 0;
+  const sentences = clean.split(/[.!?]+(?:\s|$)/).filter(s => s.trim().length > 0);
+  return sentences.length;
+};
+
 const handleSubmit = async () => {
+  const sentenceCount = countSentences(form.value.namaAksi);
+  if (sentenceCount < 10) {
+    alert(`Validasi Gagal: Rencana Aksi baru memiliki ${sentenceCount} kalimat. Silakan tulis minimal 10 kalimat (masing-masing diakhiri dengan tanda baca titik/seru/tanya).`);
+    return;
+  }
+
   submitting.value = true;
   try {
     await $fetch<any>('/api/rencana-aksi', {

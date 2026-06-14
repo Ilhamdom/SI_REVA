@@ -119,7 +119,7 @@ const normalizedRole = computed(() => String(role.value || '').toLowerCase().rep
 const isSuperAdmin = computed(() => normalizedRole.value === 'super_admin')
 const isAdmin = computed(() => normalizedRole.value === 'admin')
 const isUser = computed(() => normalizedRole.value === 'user')
-const canInput = computed(() => isSuperAdmin.value || isUser.value)
+const canInput = computed(() => isSuperAdmin.value || isAdmin.value || isUser.value)
 const userUnit = computed(() => authUser.value?.unit_kerja?.trim() || null)
 
 const searchQuery = ref('')

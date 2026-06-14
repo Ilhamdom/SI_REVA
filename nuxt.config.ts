@@ -26,6 +26,18 @@ export default defineNuxtConfig({
     'scratch/**',
     'sireva'
   ],
+  watchers: {
+    chokidar: {
+      usePolling: true,
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/.nuxt/**',
+        '**/sireva/**',
+        '**/scratch/**'
+      ]
+    }
+  },
   // Improved DB validation - warn instead of crash
   hooks: {
     'nitro:init': () => {

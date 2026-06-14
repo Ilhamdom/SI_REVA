@@ -79,11 +79,15 @@ export default defineNuxtRouteMiddleware((to, from) => {
           '/master-sasaran-program',
           '/master-sasaran-kegiatan',
           '/sasaran-strategis',
+          '/rencana-aksi',
+          '/perjanjian-kinerja',
           '/pemantauan-kinerja/sasaran-program',
           '/pemantauan-kinerja/sasaran-kegiatan',
           '/pemantauan-kinerja/rencana-aksi',
           '/cascading',
-          '/laporan/kinerja-triwulan'
+          '/laporan/kinerja-triwulan',
+          '/laporan/rencana-aksi',
+          '/laporan/perjanjian-kinerja'
         ]
       } else if (userRole === 'admin') {
         allowedPaths = [
@@ -92,10 +96,14 @@ export default defineNuxtRouteMiddleware((to, from) => {
           '/sasaran-strategis',
           '/sasaran-program',
           '/sasaran-kegiatan',
+          '/rencana-aksi',
+          '/perjanjian-kinerja',
           '/pemantauan-kinerja/sasaran-program',
           '/pemantauan-kinerja/rencana-aksi',
           '/cascading',
-          '/laporan/kinerja-triwulan'
+          '/laporan/kinerja-triwulan',
+          '/laporan/rencana-aksi',
+          '/laporan/perjanjian-kinerja'
         ]
       } else {
         allowedPaths = [
@@ -104,10 +112,14 @@ export default defineNuxtRouteMiddleware((to, from) => {
           '/sasaran-strategis',
           '/sasaran-program',
           '/sasaran-kegiatan',
+          '/rencana-aksi',
+          '/perjanjian-kinerja',
           '/pemantauan-kinerja/sasaran-kegiatan',
           '/pemantauan-kinerja/rencana-aksi',
           '/cascading',
-          '/laporan/kinerja-triwulan'
+          '/laporan/kinerja-triwulan',
+          '/laporan/rencana-aksi',
+          '/laporan/perjanjian-kinerja'
         ]
       }
       

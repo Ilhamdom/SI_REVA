@@ -41,7 +41,7 @@
             {{ stats?.ss ?? 2 }}
           </div>
           <div class="text-xs font-bold text-slate-800 leading-tight">Total Sasaran Strategis</div>
-          <div class="text-[10px] text-slate-400 mt-0.5">100% dari target tahunan</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Total yang terdaftar</div>
         </div>
       </div>
 
@@ -55,7 +55,7 @@
             {{ stats?.sp ?? 10 }}
           </div>
           <div class="text-xs font-bold text-slate-800 leading-tight">Total Sasaran Program</div>
-          <div class="text-[10px] text-slate-400 mt-0.5">100% dari target tahunan</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Total yang terdaftar</div>
         </div>
       </div>
 
@@ -69,7 +69,7 @@
             {{ stats?.sk ?? 23 }}
           </div>
           <div class="text-xs font-bold text-slate-800 leading-tight">Total Sasaran Kegiatan</div>
-          <div class="text-[10px] text-slate-400 mt-0.5">100% dari target tahunan</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Total yang terdaftar</div>
         </div>
       </div>
 
@@ -83,7 +83,7 @@
             {{ stats?.totalIku ?? 46 }}
           </div>
           <div class="text-xs font-bold text-slate-800 leading-tight">Total IKU</div>
-          <div class="text-[10px] text-slate-400 mt-0.5">100% dari target tahunan</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Total yang terdaftar</div>
         </div>
       </div>
 
@@ -154,11 +154,11 @@
           <!-- Unit List -->
           <div class="space-y-3.5">
             <div 
-              v-for="(unit, idx) in sortedCapaianUnit" 
+              v-for="(unit, idx) in sortedCapaianUnit.slice(0, 5)" 
               :key="unit.name"
               class="flex items-center gap-3"
             >
-              <span class="text-xs font-bold text-slate-400 w-5 shrink-0">{{ sortOrder === 'tertinggi' ? idx + 1 : sortedCapaianUnit.length - idx }}</span>
+              <span class="text-xs font-bold text-slate-400 w-5 shrink-0">{{ unit.rank }}</span>
               <div class="flex-1 min-w-0">
                 <div class="text-xs font-semibold text-slate-700 truncate mb-1" :title="unit.name">
                   {{ unit.name }}
@@ -185,6 +185,14 @@
           <span>50%</span>
           <span>100%</span>
         </div>
+
+        <!-- Lihat Semua Link -->
+        <button 
+          @click="showUnitModal = true"
+          class="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider mt-5 block text-center cursor-pointer w-full border-t border-slate-100 pt-3"
+        >
+          Lihat Semua <span class="ml-0.5">&gt;</span>
+        </button>
       </div>
 
       <!-- Card: Cascading Kinerja -->
@@ -207,7 +215,12 @@
             <IconTarget :size="24" class="text-[#1A73E8] mb-2" stroke-width="2" />
             <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sasaran Strategis</div>
             <div class="text-3xl font-black text-slate-800">{{ stats?.ss ?? 2 }}</div>
-            <div class="text-[10px] font-bold text-emerald-600 mt-2 bg-emerald-50 px-2 py-0.5 rounded-full">100% Tercapai</div>
+            <div 
+              class="text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full"
+              :class="!stats || stats.capaian === 0 ? 'text-slate-400 bg-slate-100' : stats.capaian >= 100 ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'"
+            >
+              {{ !stats || stats.capaian === 0 ? 'Belum Ada Data' : stats.capaian + '% Capaian' }}
+            </div>
           </NuxtLink>
 
           <!-- Arrow 1 -->
@@ -221,7 +234,12 @@
             <IconChartPie :size="24" class="text-[#137333] mb-2" stroke-width="2" />
             <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sasaran Program</div>
             <div class="text-3xl font-black text-slate-800">{{ stats?.sp ?? 10 }}</div>
-            <div class="text-[10px] font-bold text-emerald-600 mt-2 bg-emerald-50 px-2 py-0.5 rounded-full">100% Tercapai</div>
+            <div 
+              class="text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full"
+              :class="!stats || stats.capaian === 0 ? 'text-slate-400 bg-slate-100' : stats.capaian >= 100 ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'"
+            >
+              {{ !stats || stats.capaian === 0 ? 'Belum Ada Data' : stats.capaian + '% Capaian' }}
+            </div>
           </NuxtLink>
 
           <!-- Arrow 2 -->
@@ -235,7 +253,12 @@
             <IconLayoutGrid :size="24" class="text-[#B06000] mb-2" stroke-width="2" />
             <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sasaran Kegiatan</div>
             <div class="text-3xl font-black text-slate-800">{{ stats?.sk ?? 23 }}</div>
-            <div class="text-[10px] font-bold text-emerald-600 mt-2 bg-emerald-50 px-2 py-0.5 rounded-full">100% Tercapai</div>
+            <div 
+              class="text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full"
+              :class="!stats || stats.capaian === 0 ? 'text-slate-400 bg-slate-100' : stats.capaian >= 100 ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'"
+            >
+              {{ !stats || stats.capaian === 0 ? 'Belum Ada Data' : stats.capaian + '% Capaian' }}
+            </div>
           </NuxtLink>
 
           <!-- Arrow 3 -->
@@ -245,7 +268,7 @@
           </div>
 
           <!-- Box 4: Indikator Kinerja Utama -->
-          <NuxtLink :to="`/${$route.params.slug}/pemantauan-kinerja/rencana-aksi`" class="border border-[#A142F4] bg-[#F3E8FF]/10 rounded-xl p-4 flex flex-col items-center justify-center text-center w-full sm:w-[22%] min-h-[160px] cursor-pointer hover:shadow-md transition-shadow">
+          <NuxtLink :to="ikuLihatSemuaPath" class="border border-[#A142F4] bg-[#F3E8FF]/10 rounded-xl p-4 flex flex-col items-center justify-center text-center w-full sm:w-[22%] min-h-[160px] cursor-pointer hover:shadow-md transition-shadow">
             <IconTrendingUp :size="24" class="text-[#7C3AED] mb-2" stroke-width="2" />
             <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Indikator Kinerja</div>
             <div class="text-3xl font-black text-slate-800">{{ stats?.totalIku ?? 46 }}</div>
@@ -315,12 +338,103 @@
       </div>
 
       <!-- Lihat Semua Link -->
-      <NuxtLink 
-        :to="`/${$route.params.slug}/pemantauan-kinerja/rencana-aksi`"
-        class="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider mt-5 block text-center cursor-pointer"
+      <button 
+        @click="showUnitModal = true"
+        class="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider mt-5 block text-center cursor-pointer w-full text-center"
       >
         Lihat Semua <span class="ml-0.5">&gt;</span>
-      </NuxtLink>
+      </button>
+    </div>
+
+    <!-- Modal: Semua Capaian per Unit Kerja -->
+    <div v-if="showUnitModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all duration-300">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-slate-100 m-4 flex flex-col max-h-[85vh]">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <div class="space-y-0.5">
+            <h2 class="text-base font-extrabold text-slate-800">Capaian Seluruh Unit Kerja</h2>
+            <p class="text-xs text-slate-500 font-medium">Daftar lengkap besaran pencapaian kinerja per unit kerja</p>
+          </div>
+          <button @click="showUnitModal = false" class="text-slate-400 hover:text-slate-600 transition-colors text-2xl font-semibold leading-none">&times;</button>
+        </div>
+        
+        <!-- Filter & Search Controls -->
+        <div class="px-6 py-4 border-b border-slate-100 bg-white grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Search input -->
+          <div class="relative">
+            <input 
+              v-model="searchQuery" 
+              type="text" 
+              placeholder="Cari unit kerja..." 
+              class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all font-medium placeholder:text-slate-400"
+            />
+            <IconSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="16" />
+          </div>
+          
+          <!-- Sort order dropdown -->
+          <div class="relative">
+            <select 
+              v-model="modalSortOrder"
+              class="appearance-none w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all cursor-pointer"
+            >
+              <option value="tertinggi">Urutkan: Capaian Tertinggi</option>
+              <option value="terendah">Urutkan: Capaian Terendah</option>
+              <option value="abjad">Urutkan: Nama Unit Kerja (A-Z)</option>
+            </select>
+            <IconChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" :size="16" />
+          </div>
+        </div>
+        
+        <!-- Scrollable List -->
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <div 
+            v-for="(unit, idx) in filteredModalUnits" 
+            :key="unit.name"
+            class="flex items-center gap-4 py-2 border-b border-slate-50 last:border-0 hover:bg-slate-50/30 px-2 rounded-lg transition-colors"
+          >
+            <!-- Index indicator -->
+            <span class="text-xs font-bold text-slate-400 w-6 shrink-0 text-center">
+              {{ idx + 1 }}
+            </span>
+            
+            <!-- Unit details -->
+            <div class="flex-1 min-w-0">
+              <div class="text-xs font-bold text-slate-800 truncate mb-1.5 flex items-center gap-2" :title="unit.name">
+                <span class="truncate">{{ unit.name }}</span>
+                <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[9px] font-extrabold shrink-0">
+                  Rank #{{ unit.rank }}
+                </span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div 
+                    class="h-full rounded-full transition-all duration-500"
+                    :class="unit.value >= 80 ? 'bg-[#137333]' : unit.value >= 50 ? 'bg-[#B06000]' : 'bg-[#C5221F]'"
+                    :style="{ width: `${unit.value}%` }"
+                  ></div>
+                </div>
+                <span class="text-xs font-extrabold text-slate-800 w-12 text-right shrink-0">
+                  {{ unit.value }}%
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div v-if="filteredModalUnits.length === 0" class="text-center py-8 text-sm text-slate-400 font-medium">
+            Tidak ditemukan unit kerja yang cocok dengan kata kunci.
+          </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+          <button 
+            @click="showUnitModal = false"
+            class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm"
+          >
+            Tutup
+          </button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -328,12 +442,17 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { useAuthUser } from '~/composables/useAuthUser';
 import { 
   IconClock, IconChevronDown, IconTarget, 
   IconChartPie, IconLayoutGrid, IconTrendingUp,
   IconPercentage, IconAlertCircle,
-  IconInfoCircle, IconChevronRight
+  IconInfoCircle, IconChevronRight, IconSearch
 } from '@tabler/icons-vue';
+
+const route = useRoute();
+const { role } = useAuthUser();
 
 const lastUpdate = ref(new Date().toLocaleString('id-ID', { 
   day: 'numeric', 
@@ -349,9 +468,61 @@ const { data: stats } = useFetch<any>('/api/dashboard/stats', { lazy: true });
 const sortOrder = ref('tertinggi');
 
 const sortedCapaianUnit = computed(() => {
-  const units = stats.value?.capaianUnit || [];
+  const units = unitsWithRank.value;
   return [...units].sort((a, b) => {
     return sortOrder.value === 'tertinggi' ? b.value - a.value : a.value - b.value;
   });
+});
+
+// Modal & Filter States for Unit Kerja Capaian
+const showUnitModal = ref(false);
+const searchQuery = ref('');
+const modalSortOrder = ref('tertinggi');
+
+const filteredModalUnits = computed(() => {
+  const units = unitsWithRank.value;
+  
+  // 1. Filter by search query
+  let result = [...units];
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase();
+    result = result.filter(u => u.name.toLowerCase().includes(q));
+  }
+  
+  // 2. Sort results
+  if (modalSortOrder.value === 'tertinggi') {
+    result.sort((a, b) => b.value - a.value);
+  } else if (modalSortOrder.value === 'terendah') {
+    result.sort((a, b) => a.value - b.value);
+  } else if (modalSortOrder.value === 'abjad') {
+    result.sort((a, b) => a.name.localeCompare(b.name, 'id', { sensitivity: 'base' }));
+  }
+  
+  return result;
+});
+
+const totalUnitsCount = computed(() => stats.value?.capaianUnit?.length || 0);
+
+// Pre-calculate absolute rank for each unit kerja based on achievement value
+const unitsWithRank = computed(() => {
+  const units = stats.value?.capaianUnit || [];
+  // Sort descending to assign ranks
+  const sorted = [...units].sort((a, b) => b.value - a.value);
+  return units.map(u => {
+    const rank = sorted.findIndex(s => s.name === u.name) + 1;
+    return {
+      ...u,
+      rank
+    };
+  });
+});
+
+// Path to view all IKUs (Indikator Kinerja Utama) by user role
+const ikuLihatSemuaPath = computed(() => {
+  const roleStr = role.value?.toLowerCase() || '';
+  if (roleStr === 'super_admin' || roleStr === 'admin') {
+    return `/${route.params.slug}/pemantauan-kinerja/sasaran-program`;
+  }
+  return `/${route.params.slug}/pemantauan-kinerja/sasaran-kegiatan`;
 });
 </script>

@@ -137,6 +137,7 @@ definePageMeta({ layout: 'dashboard' })
 
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import useSWRV from 'swrv'
 import { 
   IconEye, IconPencil, IconPlus, IconBuilding, IconCalendarEvent, 
   IconTarget, IconFileCheck, IconSearch, IconTrash
@@ -145,6 +146,8 @@ import FilterDropdown from '@/components/FilterDropdown.vue'
 import UiTable from '@/components/UI/Table.vue'
 
 const router = useRouter()
+const fetcher = (url: string) => fetch(url).then(r => r.json())
+const { data: unitData } = useSWRV('/api/unit-kerja', fetcher)
 const searchQuery = ref('')
 const selectedYear = ref(String(new Date().getFullYear()));
 const yearOptions = ['2025', '2026', '2027', '2028', '2029'];
@@ -155,6 +158,9 @@ const unitKerjaOptions = computed(() => {
   return ['Semua Unit Kerja', ...units]
 });
 
+const { data: committedPK } = useSWRV(() => `/api/perjanjian-kinerja?tahun=${selectedYear.value}&unitKerja=${selectedUnitKerja.value}`, fetcher)
+const { data: allIndikators } = useSWRV('/api/indikator-kinerja', fetcher)
+const { data: allSasaran } = useSWRV('/api/sasaran-strategis', fetcher)
 
 const tableColumns = [
   { key: 'no', label: 'No', center: true, width: 70 },

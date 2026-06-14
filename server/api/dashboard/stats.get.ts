@@ -89,28 +89,37 @@ export default defineEventHandler(async (event) => {
 
     // 3. Capaian per Unit Kerja
     let capaianUnit: any[] = [];
-    if (unitMap.size > 0) {
-      for (const [name, stats] of unitMap.entries()) {
-        capaianUnit.push({
-          name: name,
-          value: parseFloat((stats.total / stats.count).toFixed(2))
-        });
-      }
-      capaianUnit.sort((a, b) => b.value - a.value);
-    } else {
-      // Fallback: list actual units from db with 0%
+    try {
       const dbUnits = await db.execute(sql`
-        SELECT nama 
+        SELECT DISTINCT nama 
         FROM sireva.unit_kerja 
-        WHERE id NOT IN (1, 2) AND (parent_id = 0 OR parent_id = 2)
+        WHERE nama IS NOT NULL AND nama != 'Kepala LAN'
         ORDER BY nama
-        LIMIT 7
       `);
       
-      capaianUnit = dbUnits.rows.map((u: any) => ({
-        name: u.nama,
-        value: 0
-      }));
+      capaianUnit = dbUnits.rows.map((u: any) => {
+        const name = u.nama;
+        const stats = unitMap.get(name);
+        return {
+          name: name,
+          value: stats ? parseFloat((stats.total / stats.count).toFixed(2)) : 0
+        };
+      });
+      
+      // Sort from highest to lowest by default
+      capaianUnit.sort((a, b) => b.value - a.value);
+    } catch (dbError) {
+      console.error('Error fetching unit_kerja in stats:', dbError);
+      // Fallback in case of DB error
+      if (unitMap.size > 0) {
+        for (const [name, stats] of unitMap.entries()) {
+          capaianUnit.push({
+            name: name,
+            value: parseFloat((stats.total / stats.count).toFixed(2))
+          });
+        }
+        capaianUnit.sort((a, b) => b.value - a.value);
+      }
     }
 
     // 4. IKU Prioritas / Perlu Perhatian

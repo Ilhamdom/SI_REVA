@@ -214,22 +214,28 @@
                 <h4 class="font-bold text-slate-800">{{ item.indikatorName || item.indikatorNama || '-' }}</h4>
                 <p class="text-sm font-medium text-slate-500 mt-1">Target: <span class="text-slate-800">{{ item.target || '-' }}</span> | Capaian: <span class="text-[#2663A3]">{{ item.capaian || '-' }}</span></p>
               </div>
-              <div class="space-y-2">
-                <label class="block text-xs font-black text-slate-500 uppercase tracking-widest">Rencana Tindak Lanjut <span class="text-red-500">*</span></label>
-                <textarea
-                  v-model="form.tindakLanjutIndikator[item.id || item.indikatorName || item.indikatorNama]"
-                  rows="4"
-                  class="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 font-medium text-slate-700 text-sm focus:outline-none focus:border-[#2663A3] transition-all"
-                  placeholder="Tuliskan rencana tindak lanjut..."
-                ></textarea>
-                <div class="flex justify-between items-center text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                  <span>Minimal 10 karakter</span>
-                  <span>{{ (form.tindakLanjutIndikator[item.id || item.indikatorName || item.indikatorNama] || '').length }} Karakter</span>
-                </div>
-              </div>
             </div>
+            
             <div v-if="capaianKinerjaList.length === 0" class="py-12 text-center text-slate-400 italic font-medium border border-slate-200 rounded-2xl">
               Tidak ada data capaian kinerja yang ditemukan untuk triwulan ini.
+            </div>
+
+            <!-- Single text area for kesimpulan / rencana kedepannya -->
+            <div v-if="capaianKinerjaList.length > 0" class="space-y-2 border-t border-slate-100 pt-6 mt-6">
+              <label class="block text-xs font-black text-slate-500 uppercase tracking-widest">
+                Kesimpulan / Rencana Kedepannya <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                v-model="form.rencanaTindakLanjut"
+                rows="6"
+                required
+                class="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 font-medium text-slate-700 text-sm focus:outline-none focus:border-[#2663A3] transition-all"
+                placeholder="Tuliskan kesimpulan atau rencana kedepannya apa yang akan dilakukan oleh instansi terkait kegiatan tersebut..."
+              ></textarea>
+              <div class="flex justify-between items-center text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                <span>Minimal 10 karakter</span>
+                <span>{{ (form.rencanaTindakLanjut || '').length }} Karakter</span>
+              </div>
             </div>
           </div>
         </div>
@@ -332,7 +338,7 @@ const form = ref({
   triwulan: 'Triwulan I',
   ringkasanEksekutif: '',
   kataPengantar: '',
-  tindakLanjutIndikator: {} as Record<string, string>,
+  rencanaTindakLanjut: '',
   informasiTambahan: '',
   lampiranFiles: [] as {name: string, url: string}[]
 })
@@ -382,7 +388,7 @@ function loadDraft() {
       const data = JSON.parse(d)
       if (data.ringkasanEksekutif) form.value.ringkasanEksekutif = data.ringkasanEksekutif
       if (data.kataPengantar) form.value.kataPengantar = data.kataPengantar
-      if (data.tindakLanjutIndikator) form.value.tindakLanjutIndikator = data.tindakLanjutIndikator
+      if (data.rencanaTindakLanjut) form.value.rencanaTindakLanjut = data.rencanaTindakLanjut
       if (data.informasiTambahan) form.value.informasiTambahan = data.informasiTambahan
       if (data.lampiranFiles) form.value.lampiranFiles = data.lampiranFiles
       isDraftExist.value = true
@@ -391,7 +397,7 @@ function loadDraft() {
     isDraftExist.value = false
     form.value.ringkasanEksekutif = ''
     form.value.kataPengantar = ''
-    form.value.tindakLanjutIndikator = {}
+    form.value.rencanaTindakLanjut = ''
     form.value.informasiTambahan = ''
     form.value.lampiranFiles = []
   }
@@ -491,7 +497,7 @@ function saveDraft() {
   const payload = {
     ringkasanEksekutif:    form.value.ringkasanEksekutif,
     kataPengantar:         form.value.kataPengantar,
-    tindakLanjutIndikator: form.value.tindakLanjutIndikator,
+    rencanaTindakLanjut:   form.value.rencanaTindakLanjut,
     informasiTambahan:     form.value.informasiTambahan,
     lampiranFiles:         form.value.lampiranFiles,
     status:                'Draft'
@@ -542,12 +548,9 @@ async function submitReport() {
     return
   }
   
-  for (const item of capaianKinerjaList.value) {
-    const key = item.id || item.indikatorName || item.indikatorNama
-    if ((form.value.tindakLanjutIndikator[key] || '').trim().length < 10) {
-      alert(`Validasi Gagal: Rencana Tindak Lanjut untuk "${item.indikatorName || item.indikatorNama}" wajib diisi minimal 10 karakter.`)
-      return
-    }
+  if (form.value.rencanaTindakLanjut.trim().length < 10) {
+    alert('Validasi Gagal: Kesimpulan / Rencana Kedepannya wajib diisi minimal 10 karakter.')
+    return
   }
   
   submitting.value = true
@@ -560,7 +563,7 @@ async function submitReport() {
         unitKerja:            authUnitKerja.value,
         ringkasanEksekutif:   form.value.ringkasanEksekutif,
         kataPengantar:        form.value.kataPengantar,
-        rencanaTindakLanjut:  JSON.stringify(form.value.tindakLanjutIndikator),
+        rencanaTindakLanjut:  form.value.rencanaTindakLanjut,
         informasiTambahan:    form.value.informasiTambahan,
         lampiranUrl:          JSON.stringify(form.value.lampiranFiles),
         status:               'Submitted'

@@ -129,10 +129,17 @@
               <h4 class="font-bold text-slate-800">{{ item.indikatorName || item.indikatorNama || '-' }}</h4>
               <p class="text-sm font-medium text-slate-500 mt-1">Target: <span class="text-slate-800">{{ item.target || '-' }}</span> | Capaian: <span class="text-[#2663A3]">{{ item.capaian || '-' }}</span></p>
             </div>
-            <div class="space-y-2 mt-4 pt-4 border-t border-slate-100">
-              <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Rencana Tindak Lanjut</p>
+            <!-- Display under indicator only if it is legacy JSON -->
+            <div v-if="isLegacyJson" class="space-y-2 mt-4 pt-4 border-t border-slate-100">
+              <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Rencana Tindak Lanjut (Legacy)</p>
               <div class="p-4 bg-slate-50 rounded-xl text-sm font-medium text-slate-700 whitespace-pre-wrap print:bg-white print:p-0 print:text-justify">{{ tindakLanjutIndikator[item.id || item.indikatorName || item.indikatorNama] || '-' }}</div>
             </div>
+          </div>
+          
+          <!-- Single block for Kesimpulan / Rencana Kedepannya -->
+          <div v-if="!isLegacyJson" class="border border-slate-200 rounded-2xl p-6 space-y-3 mt-6 print:border-none print:px-0 print:py-4">
+            <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Kesimpulan / Rencana Kedepannya</p>
+            <div class="p-4 bg-slate-50 rounded-xl text-sm font-medium text-slate-700 whitespace-pre-wrap print:bg-white print:p-0 print:text-justify">{{ rawRencanaText || '-' }}</div>
           </div>
           <div v-if="capaianKinerjaList.length === 0" class="py-8 text-center text-slate-400 italic font-medium">
             Tidak ada data capaian kinerja.
@@ -198,6 +205,8 @@ function isPdf(file: any) {
 const loading = ref(true)
 const reportData = ref<any>(null)
 const tindakLanjutIndikator = ref<Record<string, string>>({})
+const isLegacyJson = ref(false)
+const rawRencanaText = ref('')
 const lampiranFiles = ref<any[]>([])
 
 const targetPkList = ref<any[]>([])
@@ -212,7 +221,15 @@ async function fetchReport() {
     
     if (reportData.value) {
       if (reportData.value.rencanaTindakLanjut) {
-        try { tindakLanjutIndikator.value = JSON.parse(reportData.value.rencanaTindakLanjut) } catch(e){}
+        try { 
+          tindakLanjutIndikator.value = JSON.parse(reportData.value.rencanaTindakLanjut)
+          isLegacyJson.value = typeof tindakLanjutIndikator.value === 'object' && tindakLanjutIndikator.value !== null && !Array.isArray(tindakLanjutIndikator.value)
+        } catch(e) {
+          isLegacyJson.value = false
+        }
+        if (!isLegacyJson.value) {
+          rawRencanaText.value = reportData.value.rencanaTindakLanjut
+        }
       }
       if (reportData.value.lampiranUrl) {
         try { lampiranFiles.value = JSON.parse(reportData.value.lampiranUrl) } catch(e){}

@@ -14,26 +14,26 @@
     <div class="max-w-4xl mx-auto space-y-6">
       <form @submit.prevent="handleSubmit" class="space-y-6">
         
-        <!-- Section 01: Sasaran Kegiatan -->
+        <!-- Section 01: Sasaran Program & Indikator Kinerja -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div class="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center gap-3">
             <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[#2663A3]">
               <IconTarget :size="18" stroke-width="2.5" />
             </div>
-            <h2 class="text-sm font-black text-[#2663A3] uppercase tracking-wider">Perencanaan - Sasaran Kegiatan</h2>
+            <h2 class="text-sm font-black text-[#2663A3] uppercase tracking-wider">Perencanaan - Sasaran Program</h2>
           </div>
           
           <div class="p-8 space-y-6">
-            <!-- Sasaran Kegiatan -->
+            <!-- Sasaran Program -->
             <div class="space-y-2">
-              <label class="block text-sm font-bold text-slate-700 ml-1">Sasaran Kegiatan <span class="text-red-500">*</span></label>
+              <label class="block text-sm font-bold text-slate-700 ml-1">Sasaran Program <span class="text-red-500">*</span></label>
               <select 
-                v-model="form.sasaranId" 
+                v-model="form.sasaranProgramId" 
                 class="field-input"
                 required
               >
-                <option :value="null" disabled>-- Pilih Sasaran Kegiatan --</option>
-                <option v-for="s in filteredSasaranList" :key="s.id" :value="s.id">{{ s.sasaranText }}</option>
+                <option :value="null" disabled>-- Pilih Sasaran Program --</option>
+                <option v-for="s in filteredSasaranProgramList" :key="s.id" :value="s.id">{{ s.namaSp }}</option>
               </select>
             </div>
 
@@ -44,13 +44,13 @@
                 v-model="form.indikatorId" 
                 class="field-input"
                 required
-                :disabled="!form.sasaranId"
+                :disabled="!form.sasaranProgramId"
               >
                 <option :value="null" disabled>-- Pilih Indikator Kinerja --</option>
-                <option v-for="i in filteredIndikatorList" :key="i.id" :value="i.id">{{ i.namaIndikator }}</option>
+                <option v-for="i in filteredIndikatorList" :key="i.id" :value="i.id">{{ i.namaSk }}</option>
               </select>
-              <p v-if="form.sasaranId && filteredIndikatorList.length === 0" class="text-[11px] text-amber-600 font-bold ml-1 italic">
-                * Tidak ada indikator dengan target tahun berjalan ({{ currentYear }})
+              <p v-if="form.sasaranProgramId && filteredIndikatorList.length === 0" class="text-[11px] text-amber-600 font-bold ml-1 italic">
+                * Tidak ada indikator kinerja untuk sasaran program terpilih.
               </p>
             </div>
           </div>
@@ -80,11 +80,26 @@
                 <label class="block text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Rencana Aksi / Aktivitas #{{ Number(index) + 1 }} <span class="text-red-500">*</span></label>
                 <textarea 
                   v-model="item.namaAksi" 
-                  rows="2"
+                  rows="4"
                   class="field-input resize-none"
-                  placeholder="Masukkan deskripsi rencana aksi..."
+                  placeholder="Masukkan deskripsi rencana aksi (minimal 10 kalimat)..."
                   required
                 ></textarea>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 px-1">
+                  <span class="text-[11px] text-slate-400 font-medium">
+                    * Setiap kalimat wajib diakhiri tanda baca titik (.), seru (!), atau tanya (?).
+                  </span>
+                  <span 
+                    :class="[
+                      'text-xs font-black px-2 py-0.5 rounded-lg border inline-flex items-center gap-1 self-start sm:self-auto',
+                      countSentences(item.namaAksi) >= 10 
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                        : 'bg-rose-50 text-rose-600 border-rose-200'
+                    ]"
+                  >
+                    {{ countSentences(item.namaAksi) }} / 10 Kalimat
+                  </span>
+                </div>
               </div>
 
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -158,6 +173,8 @@ import {
   IconArrowLeft, IconPlus, IconCheck, IconTarget, 
   IconListDetails, IconX, IconDeviceFloppy 
 } from '@tabler/icons-vue';
+import useSWRV from 'swrv';
+import { useAuthUser } from '~/composables/useAuthUser';
 
 const router = useRouter();
 const route = useRoute();
@@ -167,9 +184,10 @@ const currentYear = 2026;
 
 // State
 const submitting = ref(false);
+const { authUser, role } = useAuthUser();
 
 const form = ref<any>({
-  sasaranId: null,
+  sasaranProgramId: null,
   indikatorId: null,
   rencanaAksiList: [
     { namaAksi: '', target: 0, tw1: 0, tw2: 0, tw3: 0 }
@@ -177,28 +195,67 @@ const form = ref<any>({
 });
 
 // Fetchers
+const fetcher = (url: string) => fetch(url).then(r => r.json());
+const { data: rawSasaranProgram } = useSWRV('/api/sasaran-program', fetcher);
+const { data: rawSasaranKegiatan } = useSWRV('/api/sasaran-kegiatan', fetcher);
 
 // Computed / Filters
-const filteredSasaranList = computed(() => {
-  if (!kegiatanList.value) return [];
-  // Filter sasaran that has at least one indicator with target in currentYear
-  return (kegiatanList.value as any[]).filter(s => {
-    return s.indikators?.some((i: any) => 
-      i.targets?.some((t: any) => Number(t.tahun) === currentYear && t.target != null)
-    );
-  });
+const loggedUnitKerja = computed(() => authUser.value?.unit_kerja || '');
+
+const filteredSasaranProgramList = computed(() => {
+  if (!rawSasaranProgram.value) return [];
+  const list = Array.isArray(rawSasaranProgram.value) ? rawSasaranProgram.value : (rawSasaranProgram.value.data || []);
+  
+  const uniquePrograms = new Map();
+  for (const item of list) {
+    if (!item.id) continue;
+    
+    // Filter by unit kerja pengampu if the user is not super_admin
+    const isSuper = role.value?.toLowerCase() === 'super_admin';
+    if (!isSuper && loggedUnitKerja.value) {
+      const pengampu = item.unit_kerja || item.unitKerjaNama || '';
+      if (pengampu.toLowerCase().trim() !== loggedUnitKerja.value.toLowerCase().trim()) {
+        continue;
+      }
+    }
+    
+    if (!uniquePrograms.has(item.id)) {
+      uniquePrograms.set(item.id, {
+        id: item.id,
+        namaSp: item.sasaran_program_text,
+        pengampu: item.unit_kerja || item.unitKerjaNama
+      });
+    }
+  }
+  return Array.from(uniquePrograms.values());
 });
 
 const filteredIndikatorList = computed(() => {
-  if (!form.value.sasaranId || !kegiatanList.value) return [];
-  const sasaran = (kegiatanList.value as any[]).find(s => s.id === form.value.sasaranId);
-  if (!sasaran) return [];
+  if (!form.value.sasaranProgramId || !rawSasaranKegiatan.value) return [];
+  const list = Array.isArray(rawSasaranKegiatan.value) ? rawSasaranKegiatan.value : (rawSasaranKegiatan.value.data || []);
   
-  // Return only indicators that have target for currentYear
-  return (sasaran.indikators || []).filter((i: any) => 
-    i.targets?.some((t: any) => Number(t.tahun) === currentYear && t.target != null)
-  );
+  const uniqueKegiatan = new Map();
+  for (const item of list) {
+    if (Number(item.spId) === Number(form.value.sasaranProgramId)) {
+      if (!uniqueKegiatan.has(item.id)) {
+        uniqueKegiatan.set(item.id, {
+          id: item.id,
+          namaSk: item.sasaranText || item.sasaran_kegiatan_text
+        });
+      }
+    }
+  }
+  return Array.from(uniqueKegiatan.values());
 });
+
+// Helper for sentence counting
+const countSentences = (text: string) => {
+  if (!text) return 0;
+  const clean = text.trim();
+  if (!clean) return 0;
+  const sentences = clean.split(/[.!?]+(?:\s|$)/).filter(s => s.trim().length > 0);
+  return sentences.length;
+};
 
 // Methods
 const addRencanaAksi = () => {
@@ -212,12 +269,18 @@ const removeRencanaAksi = (index: number) => {
 const handleSubmit = async () => {
   if (!form.value.indikatorId) return;
 
+  // Validate that each action plan has at least 10 sentences
+  for (let idx = 0; idx < form.value.rencanaAksiList.length; idx++) {
+    const item = form.value.rencanaAksiList[idx];
+    const sentenceCount = countSentences(item.namaAksi);
+    if (sentenceCount < 10) {
+      alert(`Validasi Gagal: Rencana Aksi #${idx + 1} baru memiliki ${sentenceCount} kalimat. Silakan tulis minimal 10 kalimat (masing-masing diakhiri dengan tanda baca titik/seru/tanya).`);
+      return;
+    }
+  }
+
   submitting.value = true;
   try {
-    // We send multiple requests or one batch request depending on API.
-    // For now, let's assume one by one or modify the API if possible.
-    // Given existing code, I'll loop for simplicity or follow the batch pattern.
-    
     for (const item of form.value.rencanaAksiList) {
       await $fetch<any>('/api/rencana-aksi', {
         method: 'POST',
