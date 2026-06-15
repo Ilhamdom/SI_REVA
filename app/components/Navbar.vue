@@ -7,22 +7,22 @@
         </NuxtLink>
         <div class="hidden sm:flex flex-col justify-center leading-tight">
           <span class="text-white font-bold text-lg tracking-wide">SIREVA - NG</span>
-          <span class="font-normal text-xs" style="color: #F7D628">Sistem Informasi Perencanaan dan Evaluasi - New Generation</span>
+          <span class="font-normal text-xs" style="color: #F7D628">{{ t('slogan') }}</span>
         </div>
       </div>
       <!-- Desktop Menu Links -->
       <ul class="hidden lg:flex cd-header-buttons before-login-header-comp items-center gap-2 ml-8" id="ul_main_menu">
         <li>
-          <NuxtLink to="/" class="text-white hover:text-yellow-400 font-medium px-3 py-1">Beranda</NuxtLink>
+          <NuxtLink to="/" class="text-white hover:text-yellow-400 font-medium px-3 py-1">{{ t('home') }}</NuxtLink>
         </li>
         <li>
-          <NuxtLink :to="{ path: '/visi-misi' }" class="text-white hover:text-yellow-400 font-medium px-3 py-1">Visi & Misi</NuxtLink>
+          <NuxtLink :to="{ path: '/visi-misi' }" class="text-white hover:text-yellow-400 font-medium px-3 py-1">{{ t('visionMission') }}</NuxtLink>
         </li>
         <li>
-          <NuxtLink :to="{ path: '/produk-hukum' }" class="text-white hover:text-yellow-400 font-medium px-3 py-1">Produk Hukum</NuxtLink>
+          <NuxtLink :to="{ path: '/produk-hukum' }" class="text-white hover:text-yellow-400 font-medium px-3 py-1">{{ t('legalProducts') }}</NuxtLink>
         </li>
         <li>
-          <a href="https://ppid.lan.go.id/" target="_blank" rel="noopener" class="text-white hover:text-yellow-400 font-medium px-3 py-1">PPID</a>
+          <a href="https://ppid.lan.go.id/" target="_blank" rel="noopener" class="text-white hover:text-yellow-400 font-medium px-3 py-1">{{ t('ppid') }}</a>
         </li>
         <li>
           <button
@@ -32,7 +32,7 @@
             type="button"
             @click="showLogin = true"
           >
-            <span>MASUK</span>
+            <span>{{ t('login') }}</span>
           </button>
         </li>
       </ul>
@@ -60,16 +60,16 @@
     >
       <ul class="flex flex-col gap-2">
         <li>
-          <NuxtLink to="/" class="block text-white hover:text-yellow-400 font-medium py-2 border-b border-white/5" @click="isMobileMenuOpen = false">Beranda</NuxtLink>
+          <NuxtLink to="/" class="block text-white hover:text-yellow-400 font-medium py-2 border-b border-white/5" @click="isMobileMenuOpen = false">{{ t('home') }}</NuxtLink>
         </li>
         <li>
-          <NuxtLink :to="{ path: '/visi-misi' }" class="block text-white hover:text-yellow-400 font-medium py-2 border-b border-white/5" @click="isMobileMenuOpen = false">Visi & Misi</NuxtLink>
+          <NuxtLink :to="{ path: '/visi-misi' }" class="block text-white hover:text-yellow-400 font-medium py-2 border-b border-white/5" @click="isMobileMenuOpen = false">{{ t('visionMission') }}</NuxtLink>
         </li>
         <li>
-          <NuxtLink :to="{ path: '/produk-hukum' }" class="block text-white hover:text-yellow-400 font-medium py-2 border-b border-white/5" @click="isMobileMenuOpen = false">Produk Hukum</NuxtLink>
+          <NuxtLink :to="{ path: '/produk-hukum' }" class="block text-white hover:text-yellow-400 font-medium py-2 border-b border-white/5" @click="isMobileMenuOpen = false">{{ t('legalProducts') }}</NuxtLink>
         </li>
         <li>
-          <a href="https://ppid.lan.go.id/" target="_blank" rel="noopener" class="block text-white hover:text-yellow-400 font-medium py-2 border-b border-white/5" @click="isMobileMenuOpen = false">PPID</a>
+          <a href="https://ppid.lan.go.id/" target="_blank" rel="noopener" class="block text-white hover:text-yellow-400 font-medium py-2 border-b border-white/5" @click="isMobileMenuOpen = false">{{ t('ppid') }}</a>
         </li>
         <li class="pt-2">
           <button
@@ -78,7 +78,7 @@
             type="button"
             @click="showLogin = true; isMobileMenuOpen = false"
           >
-            MASUK
+            {{ t('login') }}
           </button>
         </li>
       </ul>
@@ -86,10 +86,22 @@
     
     <!-- Language switcher - minimal text only, white bg -->
     <div class="flex justify-end px-4 py-0.5 bg-white">
-      <div class="flex items-center text-xs text-gray-700 gap-0.5">
-        <a id="hdr_lang_id" href="javascript:void(0);" class="font-medium text-gray-900 hover:text-black px-1.5 py-0.5 rounded-sm transition-colors active">ID</a>
+      <div class="flex items-center text-xs text-gray-700 gap-0.5 font-sans">
+        <a 
+          id="hdr_lang_id" 
+          href="javascript:void(0);" 
+          class="px-1.5 py-0.5 rounded-sm transition-colors cursor-pointer"
+          :class="locale === 'id' ? 'font-bold text-gray-900 active bg-gray-100' : 'text-gray-500 hover:text-gray-900'"
+          @click="setLocale('id')"
+        >ID</a>
         <span class="text-gray-400">|</span>
-        <a id="hdr_lang_en" href="javascript:void(0);" class="text-gray-500 hover:text-gray-900 px-1.5 py-0.5 rounded-sm transition-colors">EN</a>
+        <a 
+          id="hdr_lang_en" 
+          href="javascript:void(0);" 
+          class="px-1.5 py-0.5 rounded-sm transition-colors cursor-pointer"
+          :class="locale === 'en' ? 'font-bold text-gray-900 active bg-gray-100' : 'text-gray-500 hover:text-gray-900'"
+          @click="setLocale('en')"
+        >EN</a>
       </div>
     </div>
   </header>
@@ -99,9 +111,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from '@/composables/useI18n'
 
 const showLogin = ref(false)
 const isMobileMenuOpen = ref(false)
+const { locale, setLocale, t } = useI18n()
 </script>
 
 <style scoped>

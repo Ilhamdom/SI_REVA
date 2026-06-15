@@ -1,10 +1,10 @@
 <template>
-  <div class="min-h-screen bg-white">
+  <div class="min-h-screen bg-white font-sans">
     <section class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <!-- Page Title -->
       <div class="mb-12">
         <h1 class="text-4xl font-extrabold text-[#2B6CB0] border-b-2 border-[#F7D628] pb-2 inline-block uppercase">
-          VISI, MISI DAN TUJUAN LEMBAGA LAN RI
+          {{ t('visionMissionTitle') }}
         </h1>
       </div>
 
@@ -26,10 +26,10 @@
           <div>
             <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
               <span class="w-2 h-8 bg-[#2B6CB0] mr-3 rounded-full"></span>
-              VISI
+              {{ t('vision') }}
             </h2>
             <p class="text-xl text-gray-700 italic leading-relaxed pl-5 border-l-2 border-gray-200">
-              "Terwujudnya Kebijakan dan Kapasitas Aparatur Sipil Negara yang Berkualitas dalam rangka mewujudkan Bersama Indonesia Maju Menuju Indonesia Emas 2045"
+              {{ t('visionText') }}
             </p>
           </div>
 
@@ -37,14 +37,14 @@
           <div>
             <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
               <span class="w-2 h-8 bg-[#F6AD55] mr-3 rounded-full"></span>
-              MISI
+              {{ t('mission') }}
             </h2>
             <ol class="space-y-4">
               <li v-for="(misi, index) in daftarMisi" :key="index" class="flex items-start group">
                 <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-[#2B6CB0] font-bold mr-4 group-hover:bg-[#2B6CB0] group-hover:text-white transition-colors duration-200">
                   {{ index + 1 }}
                 </span>
-                <p class="text-gray-700 text-lg leading-snug pt-0.5">
+                <p class="text-gray-700 text-lg leading-snug pt-0.5 font-medium">
                   {{ misi }}
                 </p>
               </li>
@@ -55,14 +55,14 @@
           <div>
             <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
               <span class="w-2 h-8 bg-[#2B6CB0] mr-3 rounded-full"></span>
-              TUJUAN
+              {{ t('goal') }}
             </h2>
             <ol class="space-y-4">
               <li v-for="(tujuan, index) in daftarTujuan" :key="index" class="flex items-start group">
                 <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-orange-50 text-[#F6AD55] font-bold mr-4 group-hover:bg-[#F6AD55] group-hover:text-white transition-colors duration-200">
                   {{ index + 1 }}
                 </span>
-                <p class="text-gray-700 text-lg leading-snug pt-0.5">
+                <p class="text-gray-700 text-lg leading-snug pt-0.5 font-medium">
                   {{ tujuan }}
                 </p>
               </li>
@@ -75,18 +75,23 @@
 </template>
 
 <script setup lang="ts">
-const daftarMisi = [
-  "Mendorong terwujudnya kebijakan yang berkualitas di instansi pemerintah",
-  "Melaksanakan transformasi pembelajaran ASN secara terintegrasi",
-  "Menyelenggarakan pengembangan kapasitas dan pembelajaran ASN secara kolaboratif",
-  "Menyelenggarakan mutu tata kelola pengembangan kapasitas dan pembelajaran ASN",
-  "Melaksanakan tata kelola organisasi yang berkualitas dan berorientasi pada pengguna layanan"
-];
+import { computed } from 'vue'
+import { useI18n } from '@/composables/useI18n'
 
-const daftarTujuan = [
-  "Mewujudkan kebijakan publik dan kapasitas ASN yang berkualitas",
-  "Mewujudkan tata kelola organisasi yang berkualitas dan berorientasi pada pengguna layanan"
-];
+const { t } = useI18n()
+
+const daftarMisi = computed(() => [
+  t('misi1'),
+  t('misi2'),
+  t('misi3'),
+  t('misi4'),
+  t('misi5')
+])
+
+const daftarTujuan = computed(() => [
+  t('tujuan1'),
+  t('tujuan2')
+])
 
 useHead({
   title: 'Visi, Misi dan Tujuan - SIREVA',

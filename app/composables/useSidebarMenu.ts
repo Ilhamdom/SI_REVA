@@ -40,6 +40,7 @@ const superAdminMenuItems: SidebarMenuItem[] = [
       { label: 'Master Sasaran Strategis', href: SIDEBAR_MENU_ROUTES.masterSasaranStrategis, icon: 'IconTargetArrow' },
       { label: 'Master Sasaran Program', href: SIDEBAR_MENU_ROUTES.masterSasaranProgram, icon: 'IconFocus2' },
       { label: 'Master Sasaran Kegiatan', href: SIDEBAR_MENU_ROUTES.masterSasaranKegiatan, icon: 'IconListDetails' },
+      { label: 'Master Rencana Aksi', href: SIDEBAR_MENU_ROUTES.rencanaAksi, icon: 'IconClipboardList' },
     ],
   },
   {

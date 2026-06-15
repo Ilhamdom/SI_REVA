@@ -12,9 +12,9 @@
         <img :src="slide.src" :alt="slide.alt" class="h-full w-full object-cover" />
         <div class="absolute inset-0 bg-linear-to-r from-slate-950/80 via-slate-900/45 to-slate-950/20" />
         <div class="absolute inset-x-0 bottom-0 p-6 sm:p-8 lg:p-10">
-          <div class="max-w-2xl text-white">
+          <div class="max-w-2xl text-white font-sans">
             <p class="mb-3 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] backdrop-blur-sm" style="color: #F7D628">
-              SIREVA New Generation
+              {{ t('carouselSubtitle') }}
             </p>
             <h1 class="text-2xl font-bold leading-tight sm:text-4xl lg:text-5xl">
               {{ slide.title }}
@@ -30,16 +30,16 @@
         <div class="flex items-center gap-2">
           <button
             type="button"
-            class="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-slate-950/45 text-white backdrop-blur-sm transition hover:bg-slate-900/70"
-            aria-label="Slide sebelumnya"
+            class="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-slate-950/45 text-white backdrop-blur-sm transition hover:bg-slate-900/70 cursor-pointer"
+            :aria-label="t('slidePrev')"
             @click="prevSlide"
           >
             &#8249;
           </button>
           <button
             type="button"
-            class="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-slate-950/45 text-white backdrop-blur-sm transition hover:bg-slate-900/70"
-            aria-label="Slide berikutnya"
+            class="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-slate-950/45 text-white backdrop-blur-sm transition hover:bg-slate-900/70 cursor-pointer"
+            :aria-label="t('slideNext')"
             @click="nextSlide"
           >
             &#8250;
@@ -51,7 +51,10 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, computed } from 'vue'
+import { useI18n } from '@/composables/useI18n'
+
+const { t } = useI18n()
 
 interface SlideItem {
   src: string
@@ -60,26 +63,26 @@ interface SlideItem {
   description: string
 }
 
-const slides: SlideItem[] = [
+const slides = computed<SlideItem[]>(() => [
   {
     src: '/LAN_9694.JPG',
     alt: 'Gedung dan aktivitas di lingkungan LAN',
-    title: 'Perencanaan dan evaluasi kinerja dalam satu ruang kerja yang terpadu.',
-    description: 'SIREVA NG membantu menyusun sasaran, memantau realisasi, dan menjaga kesinambungan antara target strategis hingga rencana aksi.',
+    title: t('carouselSlide1Title'),
+    description: t('carouselSlide1Desc'),
   },
   {
     src: '/LAN_9736.JPG',
     alt: 'Kegiatan institusi LAN dengan suasana formal',
-    title: 'Selaraskan sasaran strategis, program, kegiatan, dan perjanjian kinerja.',
-    description: 'Tampilan yang terstruktur memudahkan setiap unit kerja melihat keterkaitan indikator, target, dan capaian secara lebih jelas.',
+    title: t('carouselSlide2Title'),
+    description: t('carouselSlide2Desc'),
   },
   {
     src: '/LAN_9802.JPG',
     alt: 'Lingkungan kerja dan dokumentasi kegiatan LAN',
-    title: 'Bangun pengambilan keputusan berbasis data yang lebih cepat dan terukur.',
-    description: 'Gunakan dashboard dan tabel monitoring untuk membaca progres triwulan, mengevaluasi target, dan menindaklanjuti rencana aksi prioritas.',
+    title: t('carouselSlide3Title'),
+    description: t('carouselSlide3Desc'),
   }
-]
+])
 
 const currentIndex = ref(0)
 let autoplayHandle: ReturnType<typeof setInterval> | null = null
@@ -89,11 +92,11 @@ function setSlide(index: number) {
 }
 
 function prevSlide() {
-  currentIndex.value = (currentIndex.value - 1 + slides.length) % slides.length
+  currentIndex.value = (currentIndex.value - 1 + slides.value.length) % slides.value.length
 }
 
 function nextSlide() {
-  currentIndex.value = (currentIndex.value + 1) % slides.length
+  currentIndex.value = (currentIndex.value + 1) % slides.value.length
 }
 
 function startAutoplay() {
