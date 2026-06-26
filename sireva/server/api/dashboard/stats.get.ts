@@ -36,6 +36,14 @@ export default defineEventHandler(async (event) => {
     const totalIku = Number(programIkuCount[0]?.count || 0) + Number(kegiatanIkuCount[0]?.count || 0);
 
     // 2. Fetch reports for 2026
+    const strategisReports = await db.execute(sql`
+      select 
+        lss.capaian
+      from sireva.laporan_sasaran_strategis lss
+      join sireva.sasaran_strategis ss on ss.id = lss.sasaran_id
+      where ss.deleted_at is null
+    `);
+
     const programReports = await db.execute(sql`
       select 
         lsp.realisasi,
@@ -58,10 +66,16 @@ export default defineEventHandler(async (event) => {
     let reportCount = 0;
     let belumTercapai = 0;
 
+    let totalCapaianSp = 0;
+    let reportCountSp = 0;
+
+    let totalCapaianSk = 0;
+    let reportCountSk = 0;
+
     // Track achievements by unit_name
     const unitMap = new Map<string, { total: number, count: number }>();
 
-    const processReport = (r: any) => {
+    const processProgramReport = (r: any) => {
       const real = parseFloat(r.realisasi || '0');
       const tar = parseFloat(r.target || '0');
       const unitName = r.unit_name || 'Lainnya';
@@ -70,6 +84,8 @@ export default defineEventHandler(async (event) => {
         const cap = Math.min((real / tar) * 100, 100);
         totalCapaian += cap;
         reportCount++;
+        totalCapaianSp += cap;
+        reportCountSp++;
         if (cap < 100) {
           belumTercapai++;
         }
@@ -82,10 +98,44 @@ export default defineEventHandler(async (event) => {
       }
     };
 
-    programReports.rows.forEach(processReport);
-    kegiatanReports.rows.forEach(processReport);
+    const processKegiatanReport = (r: any) => {
+      const real = parseFloat(r.realisasi || '0');
+      const tar = parseFloat(r.target || '0');
+      const unitName = r.unit_name || 'Lainnya';
+
+      if (tar > 0) {
+        const cap = Math.min((real / tar) * 100, 100);
+        totalCapaian += cap;
+        reportCount++;
+        totalCapaianSk += cap;
+        reportCountSk++;
+        if (cap < 100) {
+          belumTercapai++;
+        }
+
+        const current = unitMap.get(unitName) || { total: 0, count: 0 };
+        unitMap.set(unitName, {
+          total: current.total + cap,
+          count: current.count + 1
+        });
+      }
+    };
+
+    programReports.rows.forEach(processProgramReport);
+    kegiatanReports.rows.forEach(processKegiatanReport);
+
+    let totalCapaianSs = 0;
+    let reportCountSs = 0;
+    strategisReports.rows.forEach((r: any) => {
+      totalCapaianSs += parseFloat(r.capaian || '0');
+      reportCountSs++;
+    });
 
     const averageCapaian = reportCount > 0 ? parseFloat((totalCapaian / reportCount).toFixed(2)) : 0;
+    const averageCapaianSs = reportCountSs > 0 ? parseFloat((totalCapaianSs / reportCountSs).toFixed(2)) : 0;
+    const averageCapaianSp = reportCountSp > 0 ? parseFloat((totalCapaianSp / reportCountSp).toFixed(2)) : 0;
+    const averageCapaianSk = reportCountSk > 0 ? parseFloat((totalCapaianSk / reportCountSk).toFixed(2)) : 0;
+
 
     // 3. Capaian per Unit Kerja
     let capaianUnit: any[] = [];
@@ -168,8 +218,8 @@ export default defineEventHandler(async (event) => {
     // Sort by lowest achievement first
     ikuPrioritas.sort((a, b) => a.capNum - b.capNum);
     
-    // Limit to 4 rows
-    ikuPrioritas = ikuPrioritas.slice(0, 4).map((item, idx) => ({
+    // Return all, no limit (frontend handles preview vs full list)
+    ikuPrioritas = ikuPrioritas.map((item, idx) => ({
       no: idx + 1,
       iku: item.iku,
       unit: item.unit,
@@ -177,6 +227,7 @@ export default defineEventHandler(async (event) => {
       realisasi: item.realisasi,
       capaian: item.capaian,
       deviasi: item.deviasi,
+      capNum: item.capNum,
       status: item.status
     }));
 
@@ -186,6 +237,9 @@ export default defineEventHandler(async (event) => {
       sk: Number(skCount[0]?.count || 0),
       totalIku: totalIku,
       capaian: averageCapaian,
+      capaianSs: averageCapaianSs,
+      capaianSp: averageCapaianSp,
+      capaianSk: averageCapaianSk,
       belumTercapai: reportCount > 0 ? belumTercapai : totalIku,
       capaianUnit,
       ikuPrioritas
@@ -198,9 +252,13 @@ export default defineEventHandler(async (event) => {
       sk: 0,
       totalIku: 0,
       capaian: 0,
+      capaianSs: 0,
+      capaianSp: 0,
+      capaianSk: 0,
       belumTercapai: 0,
       capaianUnit: [],
       ikuPrioritas: []
     };
   }
 });
+

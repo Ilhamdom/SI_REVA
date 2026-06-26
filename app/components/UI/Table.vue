@@ -154,6 +154,8 @@ const props = defineProps({
   showPagination: { type: Boolean, default: true },
   rowKey:    { type: String, default: 'id' },
   className: { type: String, default: '' },
+  // When provided, search is limited to these field keys only
+  searchKeys: { type: Array as () => string[], default: () => [] },
 })
 
 const searchTerm = ref('')
@@ -201,9 +203,14 @@ const topHeaderCells = computed<HeaderGroupCell[]>(() => {
 const filteredData = computed(() => {
   if (!props.showSearch || !searchTerm.value) return props.data
   const q = searchTerm.value.toLowerCase()
-  return props.data.filter((row) =>
-    Object.values(row).some((v) => String(v).toLowerCase().includes(q))
-  )
+  // If searchKeys provided, only search those fields; otherwise search all
+  const keys = props.searchKeys && props.searchKeys.length > 0 ? props.searchKeys : null
+  return props.data.filter((row) => {
+    if (keys) {
+      return keys.some((k) => String(row[k] ?? '').toLowerCase().includes(q))
+    }
+    return Object.values(row).some((v) => String(v).toLowerCase().includes(q))
+  })
 })
 
 // 2. Sort

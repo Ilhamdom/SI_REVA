@@ -263,10 +263,19 @@ export function printOrgChart(units) {
   @media print {
     .btn-wrap { display:none; }
     body { background:white; }
-    .tree-wrapper { overflow-x: visible; padding: 0; }
-    #cascade-tree { min-width: max-content; display: flex; }
+    .tree-wrapper { overflow-x: visible !important; padding: 0; }
+    /* Force horizontal layout on print - NEVER override to column */
+    #cascade-tree { min-width: max-content; display: flex; flex-direction: column; align-items: center; }
+    .ss-level, .sp-level, .sk-level {
+      display: flex !important; flex-direction: row !important;
+      flex-wrap: nowrap !important;
+    }
+    .ss-item, .sp-item, .sk-item {
+      display: flex !important; flex-direction: column !important;
+      align-items: center !important;
+    }
   }
-  @media screen and (max-width: 768px), print and (max-width: 768px) {
+  @media screen and (max-width: 768px) {
     body { font-size: 8pt !important; padding: 10px !important; }
     .tree-wrapper { padding: 10px 0 !important; overflow-x: visible !important; }
     #cascade-tree { min-width: 100% !important; width: 100% !important; transform: none !important; margin-bottom: 0 !important; }

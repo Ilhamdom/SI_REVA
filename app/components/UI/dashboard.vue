@@ -217,9 +217,9 @@
             <div class="text-3xl font-black text-slate-800">{{ stats?.ss ?? 2 }}</div>
             <div 
               class="text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full"
-              :class="!stats || stats.capaian === 0 ? 'text-slate-400 bg-slate-100' : stats.capaian >= 100 ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'"
+              :class="!stats || (stats.capaianSs ?? 0) === 0 ? 'text-slate-400 bg-slate-100' : (stats.capaianSs ?? 0) >= 100 ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'"
             >
-              {{ !stats || stats.capaian === 0 ? 'Belum Ada Data' : stats.capaian + '% Capaian' }}
+              {{ (stats?.capaianSs ?? 0) }}% Capaian
             </div>
           </NuxtLink>
 
@@ -236,9 +236,9 @@
             <div class="text-3xl font-black text-slate-800">{{ stats?.sp ?? 10 }}</div>
             <div 
               class="text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full"
-              :class="!stats || stats.capaian === 0 ? 'text-slate-400 bg-slate-100' : stats.capaian >= 100 ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'"
+              :class="!stats || (stats.capaianSp ?? 0) === 0 ? 'text-slate-400 bg-slate-100' : (stats.capaianSp ?? 0) >= 100 ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'"
             >
-              {{ !stats || stats.capaian === 0 ? 'Belum Ada Data' : stats.capaian + '% Capaian' }}
+              {{ (stats?.capaianSp ?? 0) }}% Capaian
             </div>
           </NuxtLink>
 
@@ -255,9 +255,9 @@
             <div class="text-3xl font-black text-slate-800">{{ stats?.sk ?? 23 }}</div>
             <div 
               class="text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full"
-              :class="!stats || stats.capaian === 0 ? 'text-slate-400 bg-slate-100' : stats.capaian >= 100 ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'"
+              :class="!stats || (stats.capaianSk ?? 0) === 0 ? 'text-slate-400 bg-slate-100' : (stats.capaianSk ?? 0) >= 100 ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'"
             >
-              {{ !stats || stats.capaian === 0 ? 'Belum Ada Data' : stats.capaian + '% Capaian' }}
+              {{ (stats?.capaianSk ?? 0) }}% Capaian
             </div>
           </NuxtLink>
 
@@ -268,12 +268,13 @@
           </div>
 
           <!-- Box 4: Indikator Kinerja Utama -->
-          <NuxtLink :to="ikuLihatSemuaPath" class="border border-[#A142F4] bg-[#F3E8FF]/10 rounded-xl p-4 flex flex-col items-center justify-center text-center w-full sm:w-[22%] min-h-[160px] cursor-pointer hover:shadow-md transition-shadow">
+          <div class="border border-[#A142F4] bg-[#F3E8FF]/10 rounded-xl p-4 flex flex-col items-center justify-center text-center w-full sm:w-[22%] min-h-[160px] transition-shadow">
             <IconTrendingUp :size="24" class="text-[#7C3AED] mb-2" stroke-width="2" />
             <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Indikator Kinerja</div>
-            <div class="text-3xl font-black text-slate-800">{{ stats?.totalIku ?? 46 }}</div>
-            <div class="text-[10px] font-bold text-[#7C3AED] mt-2 bg-[#F3E8FF] px-2 py-0.5 rounded-full">{{ (stats?.capaian ?? 82) }}% Rerata</div>
-          </NuxtLink>
+            <div class="text-3xl font-black text-slate-800">{{ (stats?.capaian ?? 82) }}%</div>
+            <div class="text-[10px] font-bold text-[#7C3AED] mt-2 bg-[#F3E8FF] px-2 py-0.5 rounded-full">Rerata Capaian</div>
+          </div>
+
 
         </div>
       </div>
@@ -309,7 +310,7 @@
           </thead>
           <tbody class="divide-y divide-slate-100 text-slate-700">
             <tr 
-              v-for="row in (stats?.ikuPrioritas || [])" 
+              v-for="row in (stats?.ikuPrioritas || []).slice(0, 4)" 
               :key="row.no"
               class="hover:bg-slate-50/50 transition-colors"
             >
@@ -337,13 +338,16 @@
         </table>
       </div>
 
-      <!-- Lihat Semua Link -->
-      <button 
-        @click="showUnitModal = true"
-        class="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider mt-5 block text-center cursor-pointer w-full text-center"
-      >
-        Lihat Semua <span class="ml-0.5">&gt;</span>
-      </button>
+      <!-- Lihat Semua IKU Prioritas -->
+      <div class="flex items-center justify-between mt-5 border-t border-slate-100 pt-3">
+        <span class="text-xs text-slate-400 font-medium">Menampilkan 4 dari {{ stats?.ikuPrioritas?.length ?? 0 }} IKU</span>
+        <button 
+          @click="showIkuModal = true"
+          class="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider cursor-pointer"
+        >
+          Lihat Semua <span class="ml-0.5">&gt;</span>
+        </button>
+      </div>
     </div>
 
     <!-- Modal: Semua Capaian per Unit Kerja -->
@@ -360,7 +364,6 @@
         
         <!-- Filter & Search Controls -->
         <div class="px-6 py-4 border-b border-slate-100 bg-white grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Search input -->
           <div class="relative">
             <input 
               v-model="searchQuery" 
@@ -370,8 +373,6 @@
             />
             <IconSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="16" />
           </div>
-          
-          <!-- Sort order dropdown -->
           <div class="relative">
             <select 
               v-model="modalSortOrder"
@@ -392,18 +393,11 @@
             :key="unit.name"
             class="flex items-center gap-4 py-2 border-b border-slate-50 last:border-0 hover:bg-slate-50/30 px-2 rounded-lg transition-colors"
           >
-            <!-- Index indicator -->
-            <span class="text-xs font-bold text-slate-400 w-6 shrink-0 text-center">
-              {{ idx + 1 }}
-            </span>
-            
-            <!-- Unit details -->
+            <span class="text-xs font-bold text-slate-400 w-6 shrink-0 text-center">{{ idx + 1 }}</span>
             <div class="flex-1 min-w-0">
               <div class="text-xs font-bold text-slate-800 truncate mb-1.5 flex items-center gap-2" :title="unit.name">
                 <span class="truncate">{{ unit.name }}</span>
-                <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[9px] font-extrabold shrink-0">
-                  Rank #{{ unit.rank }}
-                </span>
+                <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[9px] font-extrabold shrink-0">Rank #{{ unit.rank }}</span>
               </div>
               <div class="flex items-center gap-3">
                 <div class="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
@@ -413,26 +407,118 @@
                     :style="{ width: `${unit.value}%` }"
                   ></div>
                 </div>
-                <span class="text-xs font-extrabold text-slate-800 w-12 text-right shrink-0">
-                  {{ unit.value }}%
-                </span>
+                <span class="text-xs font-extrabold text-slate-800 w-12 text-right shrink-0">{{ unit.value }}%</span>
               </div>
             </div>
           </div>
-          
           <div v-if="filteredModalUnits.length === 0" class="text-center py-8 text-sm text-slate-400 font-medium">
             Tidak ditemukan unit kerja yang cocok dengan kata kunci.
           </div>
         </div>
         
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+          <button @click="showUnitModal = false" class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm">Tutup</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Detail IKU Belum Tercapai / Perlu Perhatian -->
+    <div v-if="showIkuModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all duration-300">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-5xl overflow-hidden border border-slate-100 m-4 flex flex-col max-h-[90vh]">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <div class="space-y-0.5">
+            <h2 class="text-base font-extrabold text-slate-800">Detail IKU Belum Tercapai / Perlu Perhatian</h2>
+            <p class="text-xs text-slate-500 font-medium">Seluruh Indikator Kinerja yang pencapaiannya belum memenuhi target (di bawah 100%)</p>
+          </div>
+          <button @click="showIkuModal = false" class="text-slate-400 hover:text-slate-600 transition-colors text-2xl font-semibold leading-none">&times;</button>
+        </div>
+
+        <!-- Search & Sort Controls -->
+        <div class="px-6 py-3 border-b border-slate-100 bg-white grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="relative">
+            <input
+              v-model="ikuSearchQuery"
+              type="text"
+              placeholder="Cari nama IKU atau unit kerja..."
+              class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all font-medium placeholder:text-slate-400"
+            />
+            <IconSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="16" />
+          </div>
+          <div class="relative">
+            <select
+              v-model="ikuSortOrder"
+              class="appearance-none w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all cursor-pointer"
+            >
+              <option value="terendah">Urutkan: Capaian Terendah</option>
+              <option value="tertinggi">Urutkan: Capaian Tertinggi</option>
+              <option value="abjad_iku">Urutkan: Nama IKU (A-Z)</option>
+              <option value="abjad_unit">Urutkan: Unit Kerja (A-Z)</option>
+            </select>
+            <IconChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" :size="16" />
+          </div>
+        </div>
+
+        <!-- Summary badges -->
+        <div class="px-6 py-3 border-b border-slate-100 bg-red-50/40 flex items-center gap-4 flex-wrap">
+          <span class="text-xs font-semibold text-slate-600">Total ditemukan: <span class="font-extrabold text-red-600">{{ filteredIkuPrioritas.length }}</span> IKU</span>
+          <span v-if="filteredIkuPrioritas.filter(r => r.status === 'Belum Tercapai').length > 0" class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-extrabold border border-red-200">
+            {{ filteredIkuPrioritas.filter(r => r.status === 'Belum Tercapai').length }} Belum Tercapai
+          </span>
+          <span v-if="filteredIkuPrioritas.filter(r => r.status === 'Perlu Perhatian').length > 0" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-extrabold border border-amber-200">
+            {{ filteredIkuPrioritas.filter(r => r.status === 'Perlu Perhatian').length }} Perlu Perhatian
+          </span>
+        </div>
+
+        <!-- Scrollable Table -->
+        <div class="flex-1 overflow-y-auto">
+          <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 z-10">
+              <tr class="bg-slate-50 border-b border-slate-200">
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-10">No.</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Indikator Kinerja</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Unit Kerja</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Target</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Realisasi</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Capaian</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Deviasi</th>
+                <th class="py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center w-32">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-slate-700">
+              <tr
+                v-for="(row, idx) in filteredIkuPrioritas"
+                :key="row.no"
+                class="hover:bg-slate-50/60 transition-colors"
+              >
+                <td class="py-3 px-4 text-sm font-semibold text-slate-400">{{ idx + 1 }}</td>
+                <td class="py-3 px-4 text-sm font-bold text-slate-800 leading-snug max-w-xs">{{ row.iku }}</td>
+                <td class="py-3 px-4 text-xs font-semibold text-slate-500">{{ row.unit }}</td>
+                <td class="py-3 px-4 text-sm font-bold text-slate-700 text-center">{{ row.target }}</td>
+                <td class="py-3 px-4 text-sm font-bold text-slate-700 text-center">{{ row.realisasi }}</td>
+                <td class="py-3 px-4 text-sm font-extrabold text-center" :class="parseFloat(row.capaian) >= 70 ? 'text-amber-600' : 'text-red-600'">
+                  {{ row.capaian }}
+                </td>
+                <td class="py-3 px-4 text-sm font-extrabold text-center" :class="parseFloat(row.deviasi) < 0 ? 'text-red-500' : 'text-emerald-600'">
+                  {{ row.deviasi }}
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <span
+                    class="inline-block px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wide border"
+                    :class="row.status === 'Belum Tercapai' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100'"
+                  >{{ row.status }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-if="filteredIkuPrioritas.length === 0" class="text-center py-12 text-sm text-slate-400 font-medium">
+            Tidak ditemukan IKU yang cocok dengan pencarian.
+          </div>
+        </div>
+
         <!-- Footer -->
         <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex justify-end">
-          <button 
-            @click="showUnitModal = false"
-            class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm"
-          >
-            Tutup
-          </button>
+          <button @click="showIkuModal = false" class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-all shadow-sm">Tutup</button>
         </div>
       </div>
     </div>
@@ -481,15 +567,11 @@ const modalSortOrder = ref('tertinggi');
 
 const filteredModalUnits = computed(() => {
   const units = unitsWithRank.value;
-  
-  // 1. Filter by search query
   let result = [...units];
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase();
     result = result.filter(u => u.name.toLowerCase().includes(q));
   }
-  
-  // 2. Sort results
   if (modalSortOrder.value === 'tertinggi') {
     result.sort((a, b) => b.value - a.value);
   } else if (modalSortOrder.value === 'terendah') {
@@ -497,7 +579,6 @@ const filteredModalUnits = computed(() => {
   } else if (modalSortOrder.value === 'abjad') {
     result.sort((a, b) => a.name.localeCompare(b.name, 'id', { sensitivity: 'base' }));
   }
-  
   return result;
 });
 
@@ -506,14 +587,10 @@ const totalUnitsCount = computed(() => stats.value?.capaianUnit?.length || 0);
 // Pre-calculate absolute rank for each unit kerja based on achievement value
 const unitsWithRank = computed(() => {
   const units = stats.value?.capaianUnit || [];
-  // Sort descending to assign ranks
   const sorted = [...units].sort((a, b) => b.value - a.value);
   return units.map(u => {
     const rank = sorted.findIndex(s => s.name === u.name) + 1;
-    return {
-      ...u,
-      rank
-    };
+    return { ...u, rank };
   });
 });
 
@@ -524,5 +601,37 @@ const ikuLihatSemuaPath = computed(() => {
     return `/${route.params.slug}/pemantauan-kinerja/sasaran-program`;
   }
   return `/${route.params.slug}/pemantauan-kinerja/sasaran-kegiatan`;
+});
+
+// Modal & Filter States for IKU Prioritas / Perlu Perhatian
+const showIkuModal = ref(false);
+const ikuSearchQuery = ref('');
+const ikuSortOrder = ref('terendah');
+
+const filteredIkuPrioritas = computed(() => {
+  const all = stats.value?.ikuPrioritas || [];
+  let result = [...all];
+
+  // Filter by search query (IKU name or unit name)
+  if (ikuSearchQuery.value.trim()) {
+    const q = ikuSearchQuery.value.toLowerCase();
+    result = result.filter(r =>
+      r.iku?.toLowerCase().includes(q) ||
+      r.unit?.toLowerCase().includes(q)
+    );
+  }
+
+  // Sort
+  if (ikuSortOrder.value === 'terendah') {
+    result.sort((a, b) => (a.capNum ?? 0) - (b.capNum ?? 0));
+  } else if (ikuSortOrder.value === 'tertinggi') {
+    result.sort((a, b) => (b.capNum ?? 0) - (a.capNum ?? 0));
+  } else if (ikuSortOrder.value === 'abjad_iku') {
+    result.sort((a, b) => a.iku?.localeCompare(b.iku, 'id', { sensitivity: 'base' }) ?? 0);
+  } else if (ikuSortOrder.value === 'abjad_unit') {
+    result.sort((a, b) => a.unit?.localeCompare(b.unit, 'id', { sensitivity: 'base' }) ?? 0);
+  }
+
+  return result;
 });
 </script>

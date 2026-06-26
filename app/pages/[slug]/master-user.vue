@@ -28,6 +28,7 @@
           :showSearch="true"
           :showPagination="true"
           :pageSize="10"
+          :searchKeys="tableSearchKeys"
         >
           <template #cell-aksi="{ row }">
             <div class="flex items-center justify-center gap-2">
@@ -80,15 +81,38 @@
               <label class="block text-sm font-medium text-slate-700 mb-1">Unit Kerja</label>
               <input v-model="formData.unit_kerja" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500" />
             </div>
-            <div class="flex gap-4">
-              <div class="w-1/2">
-                <label class="block text-sm font-medium text-slate-700 mb-1">Role ID</label>
-                <input v-model="formData.role_id" type="number" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500" />
+            <!-- Role Dropdown -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Role</label>
+              <div class="relative">
+                <select 
+                  v-model="formData.role" 
+                  @change="onRoleChange"
+                  required
+                  class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 appearance-none pr-9 bg-white"
+                >
+                  <option value="" disabled>-- Pilih Role --</option>
+                  <option v-for="opt in roleOptions" :key="opt.value" :value="opt.value">
+                    {{ opt.label }}
+                  </option>
+                </select>
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </span>
               </div>
-              <div class="w-1/2">
-                <label class="block text-sm font-medium text-slate-700 mb-1">Role</label>
-                <input v-model="formData.role" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500" />
-              </div>
+              <!-- Role description hint -->
+              <p v-if="selectedRoleDesc" class="mt-1.5 text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-md px-2.5 py-1.5">{{ selectedRoleDesc }}</p>
+            </div>
+
+            <!-- Role ID (auto-filled, read-only) -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Role ID <span class="text-xs text-slate-400 font-normal">(terisi otomatis)</span></label>
+              <input 
+                :value="formData.role_id ?? ''" 
+                type="text" 
+                readonly 
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed" 
+              />
             </div>
             <div class="flex justify-end gap-2 mt-6">
               <button type="button" @click="closeModal" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-sm transition-colors">Batal</button>
@@ -140,6 +164,9 @@ const columns = [
   { key: 'unit_kerja', label: 'Unit Kerja' },
   { key: 'aksi', label: 'Aksi', className: 'text-center w-24' },
 ];
+
+// Keys that should be searched when user types in the search box
+const tableSearchKeys = ['nama', 'username', 'unit_kerja'];
 
 const dummyRows: UserRow[] = [
   {
@@ -224,6 +251,36 @@ const tableRows = computed<UserRow[]>(() => {
   return mappedRows.length ? mappedRows : dummyRows;
 });
 
+// Fast id-keyed Map of raw API data for reliable openModal lookup
+const rawDataById = computed<Map<number, UserApi>>(() => {
+  const map = new Map<number, UserApi>();
+  if (Array.isArray(data.value)) {
+    for (const item of data.value) {
+      if (item.id != null) map.set(Number(item.id), item);
+    }
+  }
+  return map;
+});
+
+// Role options with ID, label, and description
+const roleOptions = [
+  { value: 'super_admin', id: 1, label: 'Super Admin (Role ID: 1)', desc: 'Akses penuh ke seluruh fitur, termasuk Master Data, Perencanaan, Pemantauan, dan Dashboard.' },
+  { value: 'admin',       id: 2, label: 'Admin / Eselon 1 (Role ID: 2)', desc: 'Akses ke fitur Perencanaan, Pemantauan, Cascading Kinerja, dan Laporan tingkat Eselon 1.' },
+  { value: 'user',        id: 3, label: 'User / Unit Kerja (Role ID: 3)', desc: 'Akses terbatas ke perencanaan dan pemantauan pada level unit kerja masing-masing.' },
+  { value: 'verifikator', id: null, label: 'Verifikator', desc: 'Bertugas melakukan verifikasi data yang diinputkan oleh unit kerja.' },
+  { value: 'kepala',      id: null, label: 'Kepala', desc: 'Akses monitoring dan persetujuan sebagai Kepala unit.' },
+];
+
+const selectedRoleDesc = computed(() => {
+  const opt = roleOptions.find(o => o.value === formData.role);
+  return opt?.desc || '';
+});
+
+function onRoleChange() {
+  const opt = roleOptions.find(o => o.value === formData.role);
+  formData.role_id = opt?.id ?? null;
+}
+
 // Modal & Form State
 const showModal = ref(false);
 const isEdit = ref(false);
@@ -245,19 +302,23 @@ function openModal(row?: UserRow) {
     formData.username = row.username !== '-' ? row.username : '';
     formData.password = '';
     
-    // Find the original item from data API to get the correct values
-    const originalItem = Array.isArray(data.value) ? data.value.find(u => u.id === row.id) : null;
-    
+    // Look up original item using the fast Map (avoids stale data / type mismatch issues)
+    const originalItem = rawDataById.value.get(Number(row.id)) ?? null;
+
     if (originalItem) {
       formData.alias = originalItem.alias || '';
       formData.unit_kerja = originalItem.unit_kerja || '';
-      formData.role_id = originalItem.role_id || null;
-      formData.role = originalItem.role || '';
+      // Derive role string: prefer stored string, fallback to mapping from role_id
+      const roleStr = originalItem.role?.trim() || roleOptions.find(o => o.id === originalItem.role_id)?.value || '';
+      formData.role = roleStr;
+      formData.role_id = originalItem.role_id ?? (roleOptions.find(o => o.value === roleStr)?.id ?? null);
     } else {
+      // Fallback using row values (should rarely happen)
       formData.alias = row.nama !== '-' ? row.nama : '';
       formData.unit_kerja = row.unit_kerja !== '-' ? row.unit_kerja : '';
-      formData.role_id = row.role_id !== '-' ? Number(row.role_id) : null;
-      formData.role = row.role !== '-' ? row.role : '';
+      const roleStr = row.role !== '-' ? row.role : '';
+      formData.role = roleStr;
+      formData.role_id = row.role_id !== '-' ? Number(row.role_id) : (roleOptions.find(o => o.value === roleStr)?.id ?? null);
     }
   } else {
     formData.id = null;
